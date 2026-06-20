@@ -2,11 +2,14 @@ import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
+import { PageHero } from '@/components/ui/PageHero';
 import { Section } from '@/components/ui/Section';
-import { Brand, ContentWidth, Spacing } from '@/constants/theme';
+import { Brand, Spacing } from '@/constants/theme';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { LOCATIONS, SERVICES } from '@/lib/data';
 
 export default function LocationPage() {
+  const { isMobile } = useBreakpoint();
   const { location: slug } = useLocalSearchParams<{ location: string }>();
   const location = LOCATIONS.find((l) => l.slug === slug);
 
@@ -16,17 +19,16 @@ export default function LocationPage() {
 
   return (
     <View style={{ backgroundColor: Brand.bg }}>
-      <View style={styles.hero}>
-        <View style={styles.heroInner}>
-          <Text style={styles.breadcrumb}>Coverage Areas / {location.name}</Text>
-          <Text style={styles.title}>Commercial Dishwasher Repair{'\n'}{location.name}</Text>
-          <Text style={styles.sub}>Fast, reliable commercial dishwasher repairs across {location.coverageArea}.</Text>
-          <View style={styles.heroActions}>
-            <Button label="Book Engineer" href="/booking" size="lg" />
-            <Button label="📞 07745 407 919" onPress={() => {}} size="lg" variant="outline" />
-          </View>
+      <PageHero
+        breadcrumb={`Coverage Areas / ${location.name}`}
+        title={`Commercial Dishwasher Repair\n${location.name}`}
+        subtitle={`Fast, reliable commercial dishwasher repairs across ${location.coverageArea}.`}
+      >
+        <View style={[styles.heroActions, isMobile && styles.heroActionsCol]}>
+          <Button label="Book Engineer" href="/booking" size="lg" />
+          <Button label="📞 07745 407 919" onPress={() => {}} size="lg" variant="outline" />
         </View>
-      </View>
+      </PageHero>
 
       <Section>
         <View style={styles.content}>
@@ -53,12 +55,8 @@ export default function LocationPage() {
 }
 
 const styles = StyleSheet.create({
-  hero: { backgroundColor: Brand.bgSection, borderBottomWidth: 1, borderBottomColor: Brand.border, paddingVertical: 72, paddingHorizontal: Spacing.four },
-  heroInner: { maxWidth: ContentWidth, marginHorizontal: 'auto' as any, width: '100%', gap: Spacing.three },
-  breadcrumb: { fontSize: 12, color: Brand.textMuted },
-  title: { fontSize: 40, fontWeight: '900', color: Brand.white, letterSpacing: -1, lineHeight: 48 },
-  sub: { fontSize: 16, color: Brand.textSecondary, maxWidth: 520 },
-  heroActions: { flexDirection: 'row', gap: Spacing.two, flexWrap: 'wrap' as any },
+  heroActions: { flexDirection: 'row', gap: Spacing.two, flexWrap: 'wrap' as any, marginTop: Spacing.one },
+  heroActionsCol: { flexDirection: 'column' },
   content: { maxWidth: 720, alignSelf: 'center' as any, width: '100%', gap: Spacing.two },
   body: { fontSize: 17, color: Brand.textSecondary, lineHeight: 28 },
   coverage: { fontSize: 13, color: Brand.textMuted, fontStyle: 'italic' },

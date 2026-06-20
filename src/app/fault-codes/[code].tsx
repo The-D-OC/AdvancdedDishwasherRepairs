@@ -2,11 +2,14 @@ import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
+import { PageHero } from '@/components/ui/PageHero';
 import { Section } from '@/components/ui/Section';
-import { Brand, ContentWidth, Spacing } from '@/constants/theme';
+import { Brand, Spacing } from '@/constants/theme';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { FAULT_CODES } from '@/lib/data';
 
 export default function FaultCodePage() {
+  const { isMobile } = useBreakpoint();
   const { code: codeParam } = useLocalSearchParams<{ code: string }>();
   const fc = FAULT_CODES.find((f) => f.code.toLowerCase() === codeParam?.toLowerCase());
 
@@ -21,14 +24,10 @@ export default function FaultCodePage() {
 
   return (
     <View style={{ backgroundColor: Brand.bg }}>
-      <View style={styles.hero}>
-        <View style={styles.heroInner}>
-          <Text style={styles.breadcrumb}>Fault Codes / {fc.brand} / {fc.code}</Text>
-          <View style={styles.codeTag}><Text style={styles.codeText}>{fc.code}</Text></View>
-          <Text style={styles.title}>{fc.title}</Text>
-          <Text style={styles.meta}>{fc.brand} · {fc.model}</Text>
-        </View>
-      </View>
+      <PageHero breadcrumb={`Fault Codes / ${fc.brand} / ${fc.code}`} title={fc.title} center>
+        <View style={styles.codeTag}><Text style={styles.codeText}>{fc.code}</Text></View>
+        <Text style={styles.meta}>{fc.brand} · {fc.model}</Text>
+      </PageHero>
 
       <Section>
         <View style={styles.content}>
@@ -51,7 +50,7 @@ export default function FaultCodePage() {
           <View style={styles.cta}>
             <Text style={styles.ctaTitle}>Need an Engineer?</Text>
             <Text style={styles.ctaSub}>Our engineers can diagnose and fix this fault — usually on the first visit.</Text>
-            <View style={styles.ctaButtons}>
+            <View style={[styles.ctaButtons, isMobile && styles.ctaButtonsCol]}>
               <Button label="Book a Repair" href="/booking" size="lg" />
               <Button label="📞 07745 407 919" onPress={() => {}} size="lg" variant="outline" />
             </View>
@@ -63,12 +62,8 @@ export default function FaultCodePage() {
 }
 
 const styles = StyleSheet.create({
-  hero: { backgroundColor: Brand.bgSection, borderBottomWidth: 1, borderBottomColor: Brand.border, paddingVertical: 72, paddingHorizontal: Spacing.four },
-  heroInner: { maxWidth: ContentWidth, marginHorizontal: 'auto' as any, width: '100%', gap: Spacing.two, alignItems: 'center' },
-  breadcrumb: { fontSize: 12, color: Brand.textMuted, alignSelf: 'flex-start' as any },
   codeTag: { backgroundColor: Brand.orange, paddingHorizontal: Spacing.three, paddingVertical: 8, borderRadius: 8 },
-  codeText: { fontSize: 24, fontWeight: '900', color: Brand.white },
-  title: { fontSize: 34, fontWeight: '900', color: Brand.white, textAlign: 'center' },
+  codeText: { fontSize: 22, fontWeight: '900', color: '#000' },
   meta: { fontSize: 14, color: Brand.textMuted },
   content: { maxWidth: 720, alignSelf: 'center' as any, width: '100%', gap: Spacing.three },
   card: { backgroundColor: Brand.bgCard, borderRadius: 12, padding: Spacing.four, gap: Spacing.two, borderWidth: 1, borderColor: Brand.border },
@@ -82,6 +77,7 @@ const styles = StyleSheet.create({
   ctaTitle: { fontSize: 20, fontWeight: '700', color: Brand.white },
   ctaSub: { fontSize: 14, color: Brand.textSecondary, lineHeight: 23 },
   ctaButtons: { flexDirection: 'row', gap: Spacing.two, flexWrap: 'wrap' as any, marginTop: Spacing.two },
+  ctaButtonsCol: { flexDirection: 'column' },
   nf: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.six, gap: Spacing.three },
   nfTitle: { fontSize: 26, fontWeight: '700', color: Brand.white },
   nfText: { fontSize: 15, color: Brand.textSecondary, textAlign: 'center' },

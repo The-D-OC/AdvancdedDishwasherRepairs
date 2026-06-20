@@ -2,11 +2,14 @@ import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
+import { PageHero } from '@/components/ui/PageHero';
 import { Section } from '@/components/ui/Section';
-import { Brand, ContentWidth, Spacing } from '@/constants/theme';
+import { Brand, Spacing } from '@/constants/theme';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { MANUALS } from '@/lib/data';
 
 export default function ManualPage() {
+  const { isMobile } = useBreakpoint();
   const { manual: slug } = useLocalSearchParams<{ manual: string }>();
   const manual = MANUALS.find((m) => m.slug === slug);
 
@@ -16,16 +19,16 @@ export default function ManualPage() {
 
   return (
     <View style={{ backgroundColor: Brand.bg }}>
-      <View style={styles.hero}>
-        <View style={styles.heroInner}>
-          <Text style={styles.breadcrumb}>Manuals / {manual.brand} / {manual.model}</Text>
-          <Text style={styles.title}>{manual.title}</Text>
-          <Text style={styles.meta}>{manual.brand} · {manual.model} · {manual.productType}</Text>
-        </View>
-      </View>
+      <PageHero
+        breadcrumb={`Manuals / ${manual.brand} / ${manual.model}`}
+        title={manual.title}
+      >
+        <Text style={styles.meta}>{manual.brand} · {manual.model} · {manual.productType}</Text>
+      </PageHero>
+
       <Section>
         <View style={styles.content}>
-          <View style={styles.card}>
+          <View style={[styles.card, isMobile && styles.cardMobile]}>
             <Text style={styles.cardIcon}>📄</Text>
             <View style={styles.cardBody}>
               <Text style={styles.cardTitle}>{manual.title}</Text>
@@ -62,15 +65,12 @@ export default function ManualPage() {
 }
 
 const styles = StyleSheet.create({
-  hero: { backgroundColor: Brand.bgSection, borderBottomWidth: 1, borderBottomColor: Brand.border, paddingVertical: 72, paddingHorizontal: Spacing.four },
-  heroInner: { maxWidth: ContentWidth, marginHorizontal: 'auto' as any, width: '100%', gap: Spacing.two },
-  breadcrumb: { fontSize: 12, color: Brand.textMuted },
-  title: { fontSize: 36, fontWeight: '900', color: Brand.white, letterSpacing: -0.5 },
-  meta: { fontSize: 14, color: Brand.textMuted },
+  meta: { fontSize: 14, color: Brand.textMuted, marginTop: 4 },
   content: { maxWidth: 720, alignSelf: 'center' as any, width: '100%', gap: Spacing.four },
   card: { flexDirection: 'row', gap: Spacing.three, backgroundColor: Brand.bgCard, borderRadius: 12, padding: Spacing.four, borderWidth: 1, borderColor: Brand.border, flexWrap: 'wrap' as any },
+  cardMobile: { flexDirection: 'column' },
   cardIcon: { fontSize: 40 },
-  cardBody: { flex: 1, gap: Spacing.two, minWidth: 200 },
+  cardBody: { flex: 1, gap: Spacing.two, minWidth: 0 },
   cardTitle: { fontSize: 18, fontWeight: '700', color: Brand.white },
   cardDesc: { fontSize: 14, color: Brand.textSecondary, lineHeight: 23 },
   unavail: { gap: Spacing.two },

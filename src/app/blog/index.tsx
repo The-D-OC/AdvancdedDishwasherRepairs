@@ -1,24 +1,26 @@
 import { Link } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { PageHero } from '@/components/ui/PageHero';
 import { Section } from '@/components/ui/Section';
-import { Brand, ContentWidth, Spacing } from '@/constants/theme';
+import { Brand, Spacing } from '@/constants/theme';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { BLOG_POSTS } from '@/lib/data';
 
 export default function BlogPage() {
+  const { isMobile } = useBreakpoint();
+
   return (
     <View style={{ backgroundColor: Brand.bg }}>
-      <View style={styles.hero}>
-        <View style={styles.heroInner}>
-          <Text style={styles.breadcrumb}>Home / Blog</Text>
-          <Text style={styles.title}>Latest News & Updates</Text>
-          <Text style={styles.sub}>Tips, guides and industry news from our expert engineers.</Text>
-        </View>
-      </View>
+      <PageHero
+        breadcrumb="Home / Blog"
+        title="Latest News & Updates"
+        subtitle="Tips, guides and industry news from our expert engineers."
+      />
       <Section title="All Articles">
-        <View style={styles.grid}>
+        <View style={[styles.grid, isMobile && styles.gridMobile]}>
           {BLOG_POSTS.map((p) => (
-            <Link key={p.slug} href={`/blog/${p.slug}` as any} style={styles.cardLink}>
+            <Link key={p.slug} href={`/blog/${p.slug}` as any} style={[styles.cardLink, isMobile && styles.cardLinkMobile]}>
               <View style={styles.card}>
                 <View style={styles.img}><Text style={styles.imgIcon}>📰</Text></View>
                 <View style={styles.body}>
@@ -37,15 +39,12 @@ export default function BlogPage() {
 }
 
 const styles = StyleSheet.create({
-  hero: { backgroundColor: Brand.bgSection, borderBottomWidth: 1, borderBottomColor: Brand.border, paddingVertical: 72, paddingHorizontal: Spacing.four },
-  heroInner: { maxWidth: ContentWidth, marginHorizontal: 'auto' as any, width: '100%', gap: Spacing.two },
-  breadcrumb: { fontSize: 12, color: Brand.textMuted },
-  title: { fontSize: 42, fontWeight: '900', color: Brand.white, letterSpacing: -1 },
-  sub: { fontSize: 16, color: Brand.textSecondary, maxWidth: 480 },
   grid: { flexDirection: 'row', flexWrap: 'wrap' as any, gap: Spacing.four },
-  cardLink: { flex: 1, minWidth: 280, textDecorationLine: 'none' },
+  gridMobile: { flexDirection: 'column' },
+  cardLink: { flex: 1, minWidth: 260, textDecorationLine: 'none' },
+  cardLinkMobile: { flex: undefined, minWidth: undefined },
   card: { flex: 1, backgroundColor: Brand.bgCard, borderRadius: 12, overflow: 'hidden' as any, borderWidth: 1, borderColor: Brand.border },
-  img: { height: 200, backgroundColor: Brand.bgSection, alignItems: 'center', justifyContent: 'center' },
+  img: { height: 180, backgroundColor: Brand.bgSection, alignItems: 'center', justifyContent: 'center' },
   imgIcon: { fontSize: 48 },
   body: { padding: Spacing.four, gap: Spacing.two },
   date: { fontSize: 11, color: Brand.textMuted, fontWeight: '500' },

@@ -2,11 +2,14 @@ import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
+import { PageHero } from '@/components/ui/PageHero';
 import { Section } from '@/components/ui/Section';
-import { Brand, ContentWidth, Spacing } from '@/constants/theme';
+import { Brand, Spacing } from '@/constants/theme';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { SERVICES } from '@/lib/data';
 
 export default function ServicePage() {
+  const { isMobile } = useBreakpoint();
   const { service: slug } = useLocalSearchParams<{ service: string }>();
   const service = SERVICES.find((s) => s.slug === slug);
 
@@ -19,17 +22,12 @@ export default function ServicePage() {
 
   return (
     <View style={{ backgroundColor: Brand.bg }}>
-      <View style={styles.hero}>
-        <View style={styles.heroInner}>
-          <Text style={styles.breadcrumb}>Services / {service.title}</Text>
-          <Text style={styles.title}>{service.title}</Text>
-          <Text style={styles.sub}>{service.description}</Text>
-          <View style={styles.heroActions}>
-            <Button label="Book This Service" href="/booking" size="lg" />
-            <Button label="Get a Quote" href="/contact" size="lg" variant="outline" />
-          </View>
+      <PageHero breadcrumb={`Services / ${service.title}`} title={service.title} subtitle={service.description}>
+        <View style={[styles.heroActions, isMobile && styles.heroActionsCol]}>
+          <Button label="Book This Service" href="/booking" size="lg" />
+          <Button label="Get a Quote" href="/contact" size="lg" variant="outline" />
         </View>
-      </View>
+      </PageHero>
 
       <Section>
         <View style={styles.content}>
@@ -52,12 +50,8 @@ export default function ServicePage() {
 }
 
 const styles = StyleSheet.create({
-  hero: { backgroundColor: Brand.bgSection, borderBottomWidth: 1, borderBottomColor: Brand.border, paddingVertical: 72, paddingHorizontal: Spacing.four },
-  heroInner: { maxWidth: ContentWidth, marginHorizontal: 'auto' as any, width: '100%', gap: Spacing.three },
-  breadcrumb: { fontSize: 12, color: Brand.textMuted },
-  title: { fontSize: 42, fontWeight: '900', color: Brand.white, letterSpacing: -1 },
-  sub: { fontSize: 16, color: Brand.textSecondary, maxWidth: 520 },
-  heroActions: { flexDirection: 'row', gap: Spacing.two, flexWrap: 'wrap' as any },
+  heroActions: { flexDirection: 'row', gap: Spacing.two, flexWrap: 'wrap' as any, marginTop: Spacing.one },
+  heroActionsCol: { flexDirection: 'column' },
   content: { maxWidth: 720, alignSelf: 'center' as any, width: '100%', gap: Spacing.four },
   body: { fontSize: 17, color: Brand.textSecondary, lineHeight: 28 },
   checklist: { gap: Spacing.two },

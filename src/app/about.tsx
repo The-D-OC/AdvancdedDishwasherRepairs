@@ -1,8 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
+import { PageHero } from '@/components/ui/PageHero';
 import { Section } from '@/components/ui/Section';
-import { Brand, ContentWidth, Spacing } from '@/constants/theme';
+import { Brand, Spacing } from '@/constants/theme';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 
 const STATS = [
   { value: '5000+', label: 'Machines Repaired' },
@@ -21,18 +23,18 @@ const VALUES = [
 const CERTS = ['Gas Safe', 'CHAS', 'FSB Member', 'City & Guilds'];
 
 export default function AboutPage() {
+  const { isMobile } = useBreakpoint();
+
   return (
     <View style={{ backgroundColor: Brand.bg }}>
-      <View style={styles.hero}>
-        <View style={styles.heroInner}>
-          <Text style={styles.breadcrumb}>Home / About Us</Text>
-          <Text style={styles.title}>About Us</Text>
-          <Text style={styles.sub}>Advanced Dishwasher Repairs — the UK's trusted partner for commercial warewashing since 2009.</Text>
-        </View>
-      </View>
+      <PageHero
+        breadcrumb="Home / About Us"
+        title="About Us"
+        subtitle="Advanced Dishwasher Repairs — the UK's trusted partner for commercial warewashing since 2009."
+      />
 
       <Section title="Over 15 Years of Experience You Can Rely On">
-        <View style={styles.twoCol}>
+        <View style={[styles.twoCol, isMobile && styles.oneCol]}>
           <View style={styles.textCol}>
             <Text style={styles.body}>Founded in 2009, Advanced Dishwasher Repairs has grown to become one of the North West's leading specialists in commercial dishwasher and glasswasher repair, maintenance and installation.</Text>
             <Text style={styles.body}>Our team of fully trained engineers covers the whole of the UK, providing fast, reliable service to hotels, restaurants, schools, hospitals and catering businesses of all sizes.</Text>
@@ -59,7 +61,7 @@ export default function AboutPage() {
       </Section>
 
       <Section title="Our Values" alt>
-        <View style={styles.valuesGrid}>
+        <View style={[styles.valuesGrid, isMobile && styles.oneCol]}>
           {VALUES.map((v) => (
             <View key={v.title} style={styles.valueCard}>
               <Text style={styles.valueIcon}>{v.icon}</Text>
@@ -71,7 +73,7 @@ export default function AboutPage() {
       </Section>
 
       <Section title="Work With Us">
-        <View style={styles.ctaRow}>
+        <View style={[styles.ctaRow, isMobile && styles.oneCol]}>
           <Button label="Book a Repair" href="/booking" size="lg" />
           <Button label="Contact Us" href="/contact" size="lg" variant="outline" />
         </View>
@@ -81,24 +83,20 @@ export default function AboutPage() {
 }
 
 const styles = StyleSheet.create({
-  hero: { backgroundColor: Brand.bgSection, borderBottomWidth: 1, borderBottomColor: Brand.border, paddingVertical: 72, paddingHorizontal: Spacing.four },
-  heroInner: { maxWidth: ContentWidth, marginHorizontal: 'auto' as any, width: '100%', gap: Spacing.two },
-  breadcrumb: { fontSize: 12, color: Brand.textMuted },
-  title: { fontSize: 42, fontWeight: '900', color: Brand.white, letterSpacing: -1 },
-  sub: { fontSize: 16, color: Brand.textSecondary, maxWidth: 560 },
   twoCol: { flexDirection: 'row', flexWrap: 'wrap' as any, gap: Spacing.six },
-  textCol: { flex: 2, minWidth: 280, gap: Spacing.three },
+  oneCol: { flexDirection: 'column' },
+  textCol: { flex: 2, minWidth: 0, gap: Spacing.three },
   body: { fontSize: 16, color: Brand.textSecondary, lineHeight: 27 },
   certRow: { flexDirection: 'row', flexWrap: 'wrap' as any, gap: Spacing.two, marginTop: Spacing.two },
   certBadge: { backgroundColor: Brand.bgCard, borderRadius: 6, paddingHorizontal: Spacing.three, paddingVertical: 8, borderWidth: 1, borderColor: Brand.orange },
   certText: { fontSize: 13, fontWeight: '600', color: Brand.orange },
-  statsCol: { flex: 1, minWidth: 220 },
+  statsCol: { flex: 1, minWidth: 0 },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap' as any, gap: Spacing.three },
   statCard: { flex: 1, minWidth: 100, backgroundColor: Brand.bgCard, borderRadius: 12, padding: Spacing.four, alignItems: 'center', gap: 4, borderWidth: 1, borderColor: Brand.border },
   statValue: { fontSize: 32, fontWeight: '900', color: Brand.orange },
   statLabel: { fontSize: 12, color: Brand.textSecondary, textAlign: 'center' as any },
   valuesGrid: { flexDirection: 'row', flexWrap: 'wrap' as any, gap: Spacing.three },
-  valueCard: { flex: 1, minWidth: 200, backgroundColor: Brand.bgCard, borderRadius: 12, padding: Spacing.four, gap: Spacing.two, borderWidth: 1, borderColor: Brand.border },
+  valueCard: { flex: 1, minWidth: 0, backgroundColor: Brand.bgCard, borderRadius: 12, padding: Spacing.four, gap: Spacing.two, borderWidth: 1, borderColor: Brand.border },
   valueIcon: { fontSize: 36 },
   valueTitle: { fontSize: 18, fontWeight: '700', color: Brand.white },
   valueDesc: { fontSize: 13, color: Brand.textSecondary, lineHeight: 21 },
