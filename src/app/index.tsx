@@ -1,5 +1,5 @@
 import { Link } from 'expo-router';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { FaultCodeSearch } from '@/components/search/FaultCodeSearch';
 import { ManualSearch } from '@/components/search/ManualSearch';
@@ -24,7 +24,7 @@ const SERVICE_ICONS: Record<string, string> = {
 
 export default function HomePage() {
   return (
-    <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+    <View style={{ backgroundColor: Brand.bg }}>
 
       {/* ── HERO ── */}
       <View style={styles.hero}>
@@ -225,7 +225,7 @@ export default function HomePage() {
         </View>
       </View>
 
-    </ScrollView>
+    </View>
   );
 }
 

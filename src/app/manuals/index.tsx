@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
 import { Section } from '@/components/ui/Section';
@@ -15,7 +15,7 @@ export default function ManualsPage() {
   });
 
   return (
-    <ScrollView style={{ backgroundColor: Brand.bg }}>
+    <View style={{ backgroundColor: Brand.bg }}>
       <View style={styles.hero}>
         <View style={styles.heroInner}>
           <Text style={styles.breadcrumb}>Home / Manuals</Text>
@@ -53,7 +53,7 @@ export default function ManualsPage() {
           <Text style={styles.empty}>No manuals found for "{query}"</Text>
         )}
       </Section>
-    </ScrollView>
+    </View>
   );
 }
 

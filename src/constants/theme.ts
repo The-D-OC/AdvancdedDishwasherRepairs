@@ -37,19 +37,19 @@ export const Brand = {
   textMuted: 'rgba(255,255,255,0.35)',
 
   // Accent
-  orange: '#F97316',
-  orangeDark: '#EA6C0A',
-  orangeLight: 'rgba(249,115,22,0.15)',
+  orange: '#2563EB',
+  orangeDark: '#1D4ED8',
+  orangeLight: 'rgba(37,99,235,0.15)',
 
   // Status
   success: '#22C55E',
   danger: '#EF4444',
-  info: '#3B82F6',
+  info: '#2563EB',
 
   // Legacy (keep for compat)
   primary: '#0D0D0D',
   primaryDark: '#000000',
-  accent: '#F97316',
+  accent: '#2563EB',
   dark: '#0D0D0D',
   muted: 'rgba(255,255,255,0.55)',
   success_hex: '#22C55E',

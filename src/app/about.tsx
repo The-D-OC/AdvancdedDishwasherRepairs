@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
 import { Section } from '@/components/ui/Section';
@@ -22,7 +22,7 @@ const CERTS = ['Gas Safe', 'CHAS', 'FSB Member', 'City & Guilds'];
 
 export default function AboutPage() {
   return (
-    <ScrollView style={{ backgroundColor: Brand.bg }}>
+    <View style={{ backgroundColor: Brand.bg }}>
       <View style={styles.hero}>
         <View style={styles.heroInner}>
           <Text style={styles.breadcrumb}>Home / About Us</Text>
@@ -76,7 +76,7 @@ export default function AboutPage() {
           <Button label="Contact Us" href="/contact" size="lg" variant="outline" />
         </View>
       </Section>
-    </ScrollView>
+    </View>
   );
 }
 

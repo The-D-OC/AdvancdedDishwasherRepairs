@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Section } from '@/components/ui/Section';
 import { Brand, ContentWidth, Spacing } from '@/constants/theme';
@@ -21,7 +21,7 @@ export default function ContactPage() {
   }
 
   return (
-    <ScrollView style={{ backgroundColor: Brand.bg }}>
+    <View style={{ backgroundColor: Brand.bg }}>
       <View style={styles.hero}>
         <View style={styles.heroInner}>
           <Text style={styles.breadcrumb}>Home / Contact Us</Text>
@@ -93,7 +93,7 @@ export default function ContactPage() {
           </View>
         </View>
       </Section>
-    </ScrollView>
+    </View>
   );
 }
 

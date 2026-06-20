@@ -1,5 +1,5 @@
 import { Link } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { Section } from '@/components/ui/Section';
 import { Brand, ContentWidth, Spacing } from '@/constants/theme';
@@ -7,7 +7,7 @@ import { BLOG_POSTS } from '@/lib/data';
 
 export default function BlogPage() {
   return (
-    <ScrollView style={{ backgroundColor: Brand.bg }}>
+    <View style={{ backgroundColor: Brand.bg }}>
       <View style={styles.hero}>
         <View style={styles.heroInner}>
           <Text style={styles.breadcrumb}>Home / Blog</Text>
@@ -32,7 +32,7 @@ export default function BlogPage() {
           ))}
         </View>
       </Section>
-    </ScrollView>
+    </View>
   );
 }
 

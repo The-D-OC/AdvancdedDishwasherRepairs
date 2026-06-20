@@ -1,5 +1,5 @@
 import { Link } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { Section } from '@/components/ui/Section';
 import { Brand, ContentWidth, Spacing } from '@/constants/theme';
@@ -9,7 +9,7 @@ const ICONS: Record<string, string> = { repairs: '🔧', installation: '🏗️'
 
 export default function ServicesPage() {
   return (
-    <ScrollView style={{ backgroundColor: Brand.bg }}>
+    <View style={{ backgroundColor: Brand.bg }}>
       <View style={styles.hero}>
         <View style={styles.heroInner}>
           <Text style={styles.breadcrumb}>Home / Services</Text>
@@ -32,7 +32,7 @@ export default function ServicesPage() {
           ))}
         </View>
       </Section>
-    </ScrollView>
+    </View>
   );
 }
 

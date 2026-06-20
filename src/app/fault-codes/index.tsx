@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { FaultCodeSearch } from '@/components/search/FaultCodeSearch';
 import { Section } from '@/components/ui/Section';
@@ -7,7 +7,7 @@ import { FAULT_CODES } from '@/lib/data';
 
 export default function FaultCodesPage() {
   return (
-    <ScrollView style={{ backgroundColor: Brand.bg }}>
+    <View style={{ backgroundColor: Brand.bg }}>
       <View style={styles.hero}>
         <View style={styles.heroInner}>
           <Text style={styles.breadcrumb}>Home / Fault Codes</Text>
@@ -48,7 +48,7 @@ export default function FaultCodesPage() {
           ))}
         </View>
       </Section>
-    </ScrollView>
+    </View>
   );
 }
 

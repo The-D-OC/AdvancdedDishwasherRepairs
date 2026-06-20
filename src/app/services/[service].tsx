@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
 import { Section } from '@/components/ui/Section';
@@ -18,7 +18,7 @@ export default function ServicePage() {
   );
 
   return (
-    <ScrollView style={{ backgroundColor: Brand.bg }}>
+    <View style={{ backgroundColor: Brand.bg }}>
       <View style={styles.hero}>
         <View style={styles.heroInner}>
           <Text style={styles.breadcrumb}>Services / {service.title}</Text>
@@ -47,7 +47,7 @@ export default function ServicePage() {
           </View>
         </View>
       </Section>
-    </ScrollView>
+    </View>
   );
 }
 

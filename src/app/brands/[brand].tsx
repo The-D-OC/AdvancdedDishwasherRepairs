@@ -1,5 +1,5 @@
 import { Link, useLocalSearchParams } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
 import { Section } from '@/components/ui/Section';
@@ -17,7 +17,7 @@ export default function BrandPage() {
   );
 
   return (
-    <ScrollView style={{ backgroundColor: Brand.bg }}>
+    <View style={{ backgroundColor: Brand.bg }}>
       <View style={styles.hero}>
         <View style={styles.heroInner}>
           <Text style={styles.breadcrumb}>Brands / {brand.name}</Text>
@@ -69,7 +69,7 @@ export default function BrandPage() {
           <Button label="All Manuals" href="/manuals" size="lg" variant="outline" />
         </View>
       </Section>
-    </ScrollView>
+    </View>
   );
 }
 

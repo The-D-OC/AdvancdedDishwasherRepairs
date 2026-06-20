@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
 import { Section } from '@/components/ui/Section';
@@ -15,7 +15,7 @@ export default function LocationPage() {
   );
 
   return (
-    <ScrollView style={{ backgroundColor: Brand.bg }}>
+    <View style={{ backgroundColor: Brand.bg }}>
       <View style={styles.hero}>
         <View style={styles.heroInner}>
           <Text style={styles.breadcrumb}>Coverage Areas / {location.name}</Text>
@@ -48,7 +48,7 @@ export default function LocationPage() {
           ))}
         </View>
       </Section>
-    </ScrollView>
+    </View>
   );
 }
 
