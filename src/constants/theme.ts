@@ -36,20 +36,20 @@ export const Brand = {
   textSecondary: 'rgba(255,255,255,0.55)',
   textMuted: 'rgba(255,255,255,0.35)',
 
-  // Accent
-  orange: '#2563EB',
-  orangeDark: '#1D4ED8',
-  orangeLight: 'rgba(37,99,235,0.15)',
+  // Accent — cyan matching logo lightning bolt
+  orange: '#00B4D8',
+  orangeDark: '#0096B7',
+  orangeLight: 'rgba(0,180,216,0.15)',
 
   // Status
   success: '#22C55E',
   danger: '#EF4444',
-  info: '#2563EB',
+  info: '#00B4D8',
 
   // Legacy (keep for compat)
   primary: '#0D0D0D',
   primaryDark: '#000000',
-  accent: '#2563EB',
+  accent: '#00B4D8',
   dark: '#0D0D0D',
   muted: 'rgba(255,255,255,0.55)',
   success_hex: '#22C55E',

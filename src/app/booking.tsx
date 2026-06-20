@@ -3,6 +3,7 @@ import { Alert, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'r
 
 import { Section } from '@/components/ui/Section';
 import { Brand, ContentWidth, Spacing } from '@/constants/theme';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { BRANDS, SERVICES } from '@/lib/data';
 
 const URGENCY = [
@@ -13,6 +14,7 @@ const URGENCY = [
 ];
 
 export default function BookingPage() {
+  const { isMobile } = useBreakpoint();
   const [form, setForm] = useState({ name: '', company: '', email: '', phone: '', brand: '', model: '', service: '', urgency: '', issue: '', address: '', postcode: '', honeypot: '' });
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
@@ -34,8 +36,8 @@ export default function BookingPage() {
       <View style={styles.hero}>
         <View style={styles.heroInner}>
           <Text style={styles.breadcrumb}>Home / Book a Repair</Text>
-          <Text style={styles.title}>Book a Repair</Text>
-          <Text style={styles.sub}>Fill in the form and we'll confirm your booking within 30 minutes.</Text>
+          <Text style={[styles.title, isMobile && styles.titleMobile]}>Book a Repair</Text>
+          <Text style={[styles.sub, isMobile && styles.subMobile]}>Fill in the form and we'll confirm your booking within 30 minutes.</Text>
           <View style={styles.badges}>
             {['30 min confirmation', '98% first-time fix', '90-day warranty'].map((b) => (
               <View key={b} style={styles.badge}><Text style={styles.badgeText}>✓ {b}</Text></View>
@@ -134,7 +136,9 @@ const styles = StyleSheet.create({
   heroInner: { maxWidth: ContentWidth, marginHorizontal: 'auto' as any, width: '100%', gap: Spacing.three },
   breadcrumb: { fontSize: 12, color: Brand.textMuted },
   title: { fontSize: 42, fontWeight: '900', color: Brand.white, letterSpacing: -1 },
+  titleMobile: { fontSize: 28, letterSpacing: -0.5 },
   sub: { fontSize: 16, color: Brand.textSecondary, maxWidth: 480 },
+  subMobile: { fontSize: 14 },
   badges: { flexDirection: 'row', flexWrap: 'wrap' as any, gap: Spacing.two },
   badge: { backgroundColor: Brand.bgCard, borderRadius: 100, paddingHorizontal: Spacing.three, paddingVertical: 6, borderWidth: 1, borderColor: Brand.border },
   badgeText: { color: Brand.white, fontSize: 13, fontWeight: '500' },

@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 
 import { Brand, ContentWidth, Spacing } from '@/constants/theme';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 
 interface SectionProps {
   children: ReactNode;
@@ -13,13 +14,15 @@ interface SectionProps {
 }
 
 export function Section({ children, title, subtitle, alt, style, innerStyle }: SectionProps) {
+  const { isMobile } = useBreakpoint();
+
   return (
     <View style={[styles.section, alt && styles.sectionAlt, style]}>
-      <View style={[styles.inner, innerStyle]}>
+      <View style={[styles.inner, isMobile && styles.innerMobile, innerStyle]}>
         {(title || subtitle) && (
           <View style={styles.header}>
-            {title && <Text style={styles.title}>{title}</Text>}
-            {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+            {title && <Text style={[styles.title, isMobile && styles.titleMobile]}>{title}</Text>}
+            {subtitle && <Text style={[styles.subtitle, isMobile && styles.subtitleMobile]}>{subtitle}</Text>}
           </View>
         )}
         {children}
@@ -43,6 +46,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     gap: Spacing.five,
   },
+  innerMobile: {
+    paddingHorizontal: Spacing.three,
+    gap: Spacing.four,
+  },
   header: {
     alignItems: 'center',
     gap: Spacing.two,
@@ -55,11 +62,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: -0.5,
   },
+  titleMobile: {
+    fontSize: 24,
+  },
   subtitle: {
     fontSize: 16,
     color: Brand.textSecondary,
     textAlign: 'center',
     maxWidth: 560,
     lineHeight: 26,
+  },
+  subtitleMobile: {
+    fontSize: 14,
+    lineHeight: 22,
   },
 });

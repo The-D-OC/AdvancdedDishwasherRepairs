@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -31,11 +32,11 @@ export function Footer() {
     <View style={styles.wrapper}>
       <View style={styles.inner}>
         <View style={styles.brand}>
-          <View style={styles.logoRow}>
-            <Text style={styles.logoTop}>ADVANCED</Text>
-            <View style={styles.logoDivider} />
-            <Text style={styles.logoBottom}>DISHWASHER REPAIRS</Text>
-          </View>
+          <Image
+            source={require('@/assets/images/logo.jpg')}
+            style={styles.logoImg}
+            contentFit="contain"
+          />
           <Text style={styles.tagline}>
             Fast, reliable & professional commercial dishwasher repair and maintenance services across the North West.
           </Text>
@@ -72,7 +73,7 @@ export function Footer() {
 }
 
 const styles = StyleSheet.create({
-  wrapper: { backgroundColor: '#0A0A0A', borderTopWidth: 1, borderTopColor: Brand.border },
+  wrapper: { backgroundColor: '#060606', borderTopWidth: 1, borderTopColor: Brand.border },
   inner: {
     maxWidth: ContentWidth,
     marginHorizontal: 'auto' as any,
@@ -84,18 +85,15 @@ const styles = StyleSheet.create({
     gap: Spacing.six,
   },
   brand: { flex: 1, minWidth: 260, gap: Spacing.three },
-  logoRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  logoTop: { color: Brand.white, fontSize: 15, fontWeight: '900', letterSpacing: 2 },
-  logoDivider: { width: 1, height: 18, backgroundColor: Brand.orange },
-  logoBottom: { color: Brand.orange, fontSize: 9, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' as any },
+  logoImg: { width: 160, height: 60 },
   tagline: { color: Brand.textSecondary, fontSize: 13, lineHeight: 22, maxWidth: 280 },
   contactInfo: { gap: Spacing.one },
-  phone: { color: Brand.white, fontSize: 15, fontWeight: '700' },
+  phone: { color: Brand.orange, fontSize: 15, fontWeight: '700' },
   email: { color: Brand.textSecondary, fontSize: 13 },
   linksRow: { flex: 2, flexDirection: 'row' as any, flexWrap: 'wrap' as any, gap: Spacing.five },
   linkCol: { minWidth: 120, gap: Spacing.two },
   groupTitle: {
-    color: Brand.white,
+    color: Brand.orange,
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase' as any,

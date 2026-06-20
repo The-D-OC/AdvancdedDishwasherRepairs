@@ -1,0 +1,24 @@
+html,
+body,
+#root {
+  height: auto !important;
+  min-height: 100vh;
+  overflow: visible !important;
+  background-color: #0a0a0a;
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Remove default link underlines sitewide */
+a {
+  text-decoration: none;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}

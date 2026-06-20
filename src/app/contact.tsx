@@ -3,8 +3,10 @@ import { Alert, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'r
 
 import { Section } from '@/components/ui/Section';
 import { Brand, ContentWidth, Spacing } from '@/constants/theme';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 
 export default function ContactPage() {
+  const { isMobile } = useBreakpoint();
   const [form, setForm] = useState({ name: '', company: '', email: '', phone: '', message: '', honeypot: '' });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -25,8 +27,8 @@ export default function ContactPage() {
       <View style={styles.hero}>
         <View style={styles.heroInner}>
           <Text style={styles.breadcrumb}>Home / Contact Us</Text>
-          <Text style={styles.title}>Contact Us</Text>
-          <Text style={styles.sub}>Get in touch for quotes, enquiries or emergency assistance.</Text>
+          <Text style={[styles.title, isMobile && styles.titleMobile]}>Contact Us</Text>
+          <Text style={[styles.sub, isMobile && styles.subMobile]}>Get in touch for quotes, enquiries or emergency assistance.</Text>
         </View>
       </View>
 
@@ -109,9 +111,12 @@ function Field({ label, value, onChange, placeholder, keyboard }: { label: strin
 const styles = StyleSheet.create({
   hero: { backgroundColor: Brand.bgSection, borderBottomWidth: 1, borderBottomColor: Brand.border, paddingVertical: 72, paddingHorizontal: Spacing.four },
   heroInner: { maxWidth: ContentWidth, marginHorizontal: 'auto' as any, width: '100%', gap: Spacing.two },
+  heroInnerMobile: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.five },
   breadcrumb: { fontSize: 12, color: Brand.textMuted },
   title: { fontSize: 42, fontWeight: '900', color: Brand.white, letterSpacing: -1 },
+  titleMobile: { fontSize: 28, letterSpacing: -0.5 },
   sub: { fontSize: 16, color: Brand.textSecondary, maxWidth: 480 },
+  subMobile: { fontSize: 14 },
   layout: { flexDirection: 'row', flexWrap: 'wrap' as any, gap: Spacing.six },
   formCol: { flex: 2, minWidth: 280, gap: Spacing.three },
   colTitle: { fontSize: 22, fontWeight: '700', color: Brand.white },
