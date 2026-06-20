@@ -22,11 +22,11 @@ export const Colors = {
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
 export const Brand = {
-  // Core
-  bg: '#0D0D0D',
-  bgCard: '#1A1A1A',
-  bgCardHover: '#222222',
-  bgSection: '#111111',
+  // Core — dark navy matching reference design
+  bg: '#080C14',
+  bgCard: '#0F1525',
+  bgCardHover: '#151E30',
+  bgSection: '#0A1020',
   border: 'rgba(255,255,255,0.08)',
   borderLight: 'rgba(255,255,255,0.12)',
 

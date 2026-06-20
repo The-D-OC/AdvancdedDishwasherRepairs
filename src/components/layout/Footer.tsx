@@ -21,6 +21,7 @@ const LINKS = {
   'Company': [
     { label: 'About Us', href: '/about' as const },
     { label: 'Blog', href: '/blog' as const },
+    { label: 'Machines For Sale', href: '/washing-machines' as const },
     { label: 'Coverage Areas', href: '/coverage-areas' as const },
     { label: 'Contact Us', href: '/contact' as const },
     { label: 'Book a Repair', href: '/booking' as const },
@@ -73,7 +74,7 @@ export function Footer() {
 }
 
 const styles = StyleSheet.create({
-  wrapper: { backgroundColor: '#060606', borderTopWidth: 1, borderTopColor: Brand.border },
+  wrapper: { backgroundColor: '#050912', borderTopWidth: 1, borderTopColor: Brand.border },
   inner: {
     maxWidth: ContentWidth,
     marginHorizontal: 'auto' as any,

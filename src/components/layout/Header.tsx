@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { label: 'Fault Codes', href: '/fault-codes' as const },
   { label: 'Manuals', href: '/manuals' as const },
   { label: 'Coverage', href: '/coverage-areas' as const },
+  { label: 'For Sale', href: '/washing-machines' as const },
   { label: 'About', href: '/about' as const },
   { label: 'Contact Us', href: '/contact' as const },
 ];
@@ -95,7 +96,7 @@ export function Header() {
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#050912',
     borderBottomWidth: 1,
     borderBottomColor: Brand.border,
     zIndex: 100,
@@ -150,7 +151,7 @@ const styles = StyleSheet.create({
   barMidOpen: { opacity: 0 },
   barBotOpen: { transform: [{ rotate: '-45deg' }, { translateY: -7 }] },
   mobileMenu: {
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#050912',
     borderTopWidth: 1,
     borderTopColor: Brand.border,
     paddingHorizontal: Spacing.four,
