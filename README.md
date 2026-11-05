@@ -93,7 +93,24 @@ Forms work without JavaScript (plain POST + redirect to `/thanks`); with JavaScr
 
 In `npm run dev` without an API key, submissions are logged to the terminal instead of emailed.
 
-## Deploying to Cloudflare
+## Deploying to Cloudflare (automatic from GitHub)
+
+The site deploys automatically with **Cloudflare Workers Builds** whenever `main` is pushed to GitHub.
+
+One-time setup in the Cloudflare dashboard:
+
+1. **Workers & Pages → Create → Workers → Import a repository** → connect GitHub and pick `The-D-OC/AdvancdedDishwasherRepairs`.
+2. Settings:
+   - Project name: `advanced-dishwasher-repairs` (must match `name` in `wrangler.jsonc`)
+   - Production branch: `main`
+   - Build command: `npm run build`
+   - Deploy command: `npx wrangler deploy`
+3. **Save and Deploy.** Node 24 is used (from `.node-version`). The site appears at `https://advanced-dishwasher-repairs.<your-subdomain>.workers.dev`.
+4. Afterwards, in the Worker's **Settings → Variables and Secrets**, add the secret `RESEND_API_KEY` (and optionally `TURNSTILE_SECRET_KEY`) so the forms can send email.
+
+Pushes to other branches create preview versions; pushes to `main` go live.
+
+## Deploying manually (alternative)
 
 1. `npx wrangler login`
 2. Set secrets (once):
