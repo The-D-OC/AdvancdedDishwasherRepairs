@@ -1,0 +1,105 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import { formatBytes, listAllManuals } from '@/lib/manuals';
+
+export const prerender = false;
+
+const manuals = await listAllManuals(Astro.locals.supabase!);
+const flash = Astro.url.searchParams.get('deleted') ? 'Manual deleted.' : '';
+const withPdf = manuals.filter((m) => m.pdfUrl).length;
+const updated = (iso: string) =>
+  new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+---
+
+<AdminLayout title="Manuals">
+  <div class="admin-head">
+    <div>
+      <h1>Manuals</h1>
+      <p class="muted">{`${manuals.length} manuals · ${withPdf} with a PDF · ${manuals.filter((m) => !m.published).length} unpublished`}</p>
+    </div>
+    <a href="/admin/manuals/new" class="btn btn--primary btn--lg"><Icon name="file" size={20} /> Add a manual</a>
+  </div>
+
+  {flash && <p class="notice notice--ok" role="status">{flash}</p>}
+
+  {
+    manuals.length === 0 ? (
+      <div class="card">
+        <h2>No manuals yet</h2>
+        <p>Add your first manual — it appears on the website as soon as you save.</p>
+      </div>
+    ) : (
+      <ul class="rows">
+        {manuals.map((m) => (
+          <li class="row card">
+            <span class="icon-tile">
+              <Icon name="file" size={20} />
+            </span>
+            <div class="row__main">
+              <a href={`/admin/manuals/${m.id}`} class="row__title">
+                {m.title}
+              </a>
+              <p class="row__meta">{[m.brand, m.model, m.productType, `updated ${updated(m.updatedAt)}`].filter(Boolean).join(' · ')}</p>
+            </div>
+            {m.pdfUrl ? (
+              <span class="badge badge--success">PDF{m.pdfSize ? ` · ${formatBytes(m.pdfSize)}` : ''}</span>
+            ) : (
+              <span class="badge badge--warning">No PDF</span>
+            )}
+            {!m.published && <span class="badge">Unpublished</span>}
+            <div class="row__actions">
+              <a href={`/admin/manuals/${m.id}`} class="btn btn--secondary">
+                Edit
+              </a>
+              {m.published && (
+                <a href={`/manuals/${m.slug}`} class="btn btn--ghost" target="_blank" rel="noopener" aria-label={`View ${m.title} on the website`}>
+                  View
+                </a>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</AdminLayout>
+
+<style>
+  .rows {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 0.6rem;
+  }
+  .row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    padding: 0.75rem 1rem;
+  }
+  .row__main {
+    flex: 1 1 16rem;
+    min-width: 0;
+  }
+  .row__title {
+    color: var(--text);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .row__title:hover {
+    color: var(--accent);
+  }
+  .row__meta {
+    font-size: var(--fs-xs) !important;
+    color: var(--text-3) !important;
+  }
+  .row__actions {
+    display: flex;
+    gap: 0.4rem;
+  }
+  .row__actions .btn {
+    min-height: 40px;
+  }
+</style>

@@ -1,0 +1,88 @@
+---
+import { Image } from 'astro:assets';
+
+import CtaBanner from '@/components/ui/CtaBanner.astro';
+import Icon from '@/components/ui/Icon.astro';
+import PageHero from '@/components/ui/PageHero.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getBrands } from '@/lib/content';
+
+const brands = await getBrands();
+const crumbs = [{ label: 'Brands', href: '/brands' }];
+---
+
+<BaseLayout
+  title="Commercial Dishwasher Brands We Repair"
+  description="We repair and service commercial dishwashers and glasswashers from Hobart, Winterhalter, Classeq, Meiko, Electrolux and more."
+  breadcrumbs={crumbs}
+>
+  <PageHero
+    eyebrow="Brands"
+    title="Brands we repair"
+    lead="Our engineers work on all major commercial warewashing manufacturers — and plenty of smaller ones too."
+    breadcrumbs={crumbs}
+  />
+
+  <section class="section">
+    <div class="container">
+      <div class="grid grid--4">
+        {
+          brands.map((b) => (
+            <article class="card card--link brand">
+              <div class="brand__logo">
+                {b.logo ? (
+                  <Image src={b.logo.src} alt="" height={48} loading="lazy" />
+                ) : (
+                  <span>{b.name}</span>
+                )}
+              </div>
+              <h2>
+                <a href={`/brands/${b.slug}`} class="stretched">
+                  {b.name}
+                </a>
+              </h2>
+              <p>{b.description}</p>
+              <span class="card-more" aria-hidden="true">
+                Repairs, codes &amp; manuals <Icon name="arrowRight" size={16} />
+              </span>
+            </article>
+          ))
+        }
+      </div>
+      <p class="note">
+        Don’t see your brand? <a href="/contact">Get in touch</a> — we can almost certainly still help.
+      </p>
+    </div>
+  </section>
+
+  <CtaBanner />
+</BaseLayout>
+
+<style>
+  .brand__logo {
+    display: grid;
+    place-items: center;
+    height: 5rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    border: 1px solid var(--border);
+  }
+  .brand__logo span {
+    font-weight: 900;
+    font-size: var(--fs-xl);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .brand__logo img {
+    max-height: 3rem;
+    width: auto;
+  }
+  .brand h2 {
+    font-size: var(--fs-lg);
+  }
+  .note {
+    margin-top: 2rem;
+    color: var(--text-2);
+  }
+</style>

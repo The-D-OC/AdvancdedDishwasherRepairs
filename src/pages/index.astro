@@ -1,0 +1,656 @@
+---
+import LiveManuals from '@/components/manuals/LiveManuals.astro';
+import LiveMachines from '@/components/sale/LiveMachines.astro';
+import LiveMachinesFallback from '@/components/sale/LiveMachinesFallback.astro';
+import SearchBar from '@/components/search/SearchBar.astro';
+import CtaBanner from '@/components/ui/CtaBanner.astro';
+import Icon from '@/components/ui/Icon.astro';
+import MachineVisual from '@/components/ui/MachineVisual.astro';
+import StatStrip from '@/components/ui/StatStrip.astro';
+import { SITE, telHref } from '@/config/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import {
+  getBlogPosts,
+  getBrands,
+  getCaseStudies,
+  getFaultCodes,
+  getServices,
+  getTestimonials,
+} from '@/lib/content';
+import { formatDate } from '@/lib/format';
+import { websiteSchema } from '@/lib/seo';
+
+const [brands, services, faultCodes, caseStudies, testimonials, posts] = await Promise.all([
+  getBrands(),
+  getServices(),
+  getFaultCodes(),
+  getCaseStudies(),
+  getTestimonials(),
+  getBlogPosts(),
+]);
+
+const faultBrands = [...new Set(faultCodes.map((f) => f.brand))].sort();
+---
+
+<BaseLayout
+  title="Commercial Dishwasher Repair — North West Experts"
+  description={SITE.description}
+  canonicalPath="/"
+  jsonLd={[websiteSchema()]}
+>
+  <!-- Hero ------------------------------------------------------------- -->
+  <section class="hero">
+    <div class="container hero__grid">
+      <div class="hero__copy">
+        <p class="badge badge--accent"><Icon name="bolt" size={14} /> Commercial warewashing specialists</p>
+        <h1>Commercial Dishwasher <span>Repair Experts</span></h1>
+        <p class="lead">
+          {`Fast, reliable repair, installation and maintenance for commercial dishwashers and glasswashers across ${SITE.serviceArea}.`}
+        </p>
+        <ul class="checklist hero__checks">
+          <li><Icon name="check" size={18} /> Fast response &amp; same-day repairs where possible</li>
+          <li><Icon name="check" size={18} /> 15+ years experience, all major brands</li>
+          <li><Icon name="check" size={18} /> Fixed quotes &amp; 90-day repair warranty</li>
+        </ul>
+        <div class="hero__actions">
+          <a href="/booking" class="btn btn--primary btn--lg">Book an engineer <Icon name="arrowRight" size={20} /></a>
+          <a href="/contact" class="btn btn--ghost btn--lg">Get a quote</a>
+        </div>
+        <div class="hero__search">
+          <SearchBar
+            action="/fault-codes"
+            label="Search fault codes"
+            placeholder="Search a fault code, e.g. E2 or Hobart F1"
+            idPrefix="hero-search"
+          />
+        </div>
+      </div>
+
+      <div class="hero__visual" aria-hidden="true">
+        <div class="hero__glow"></div>
+        <MachineVisual type="Pass-through / hood" class="hero__machine" />
+        <a href={telHref} class="hero__float" tabindex="-1">
+          <strong>Same day</strong>
+          <span>Repairs where possible</span>
+          <span class="hero__float-phone"><Icon name="phone" size={14} /> {SITE.phone.display}</span>
+        </a>
+      </div>
+    </div>
+    <div class="container">
+      <StatStrip />
+    </div>
+  </section>
+
+  <!-- Brands strip -------------------------------------------------------->
+  <section class="brands-strip" aria-labelledby="brands-strip-title">
+    <div class="container">
+      <h2 id="brands-strip-title" class="eyebrow">Brands we repair</h2>
+      <ul>
+        {
+          brands.map((b) => (
+            <li>
+              <a href={`/brands/${b.slug}`}>{b.name}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- Manual + fault code search ----------------------------------------->
+  <section class="section" aria-labelledby="tools-title">
+    <div class="container">
+      <div class="section-head section-head--center">
+        <p class="eyebrow">Self-help tools</p>
+        <h2 id="tools-title" class="section-title">Find a fault code or manual in seconds</h2>
+        <p class="lead">Search our library by brand, model or code. Still stuck? An engineer is only a call away.</p>
+      </div>
+
+      <div class="grid grid--2">
+        <div class="tool card" data-filter-root data-filter-require-query data-filter-limit="4" data-filter-noun="match">
+          <div class="tool__head">
+            <span class="icon-tile"><Icon name="alert" size={22} /></span>
+            <div>
+              <h3>Fault code lookup</h3>
+              <p>What the code means and how to fix it.</p>
+            </div>
+          </div>
+          <SearchBar action="/fault-codes" label="Search fault codes" placeholder="Code or model, e.g. E2" brands={faultBrands} idPrefix="fc" />
+          <ul class="tool__results" aria-live="polite">
+            {
+              faultCodes.map((f) => (
+                <li data-filter-item data-facet={f.brand} data-search={`${f.brand} ${f.model} ${f.code} ${f.title}`} hidden>
+                  <a href={`/fault-codes/${f.slug}`}>
+                    <span class="tool__code">{f.code}</span>
+                    <span>
+                      <strong>
+                        {f.brand} {f.model}
+                      </strong>
+                      <small>{f.title}</small>
+                    </span>
+                    <Icon name="arrowRight" size={16} />
+                  </a>
+                </li>
+              ))
+            }
+            <li class="tool__empty" data-filter-empty hidden>
+              No match yet — <a href="/fault-codes">browse all codes</a> or <a href={telHref}>call an engineer</a>.
+            </li>
+          </ul>
+          <a href="/fault-codes" class="card-more">Browse all fault codes <Icon name="arrowRight" size={16} /></a>
+        </div>
+
+        <div class="tool card">
+          <div class="tool__head">
+            <span class="icon-tile"><Icon name="file" size={22} /></span>
+            <div>
+              <h3>Manual library</h3>
+              <p>User, installation and service manuals.</p>
+            </div>
+          </div>
+          <SearchBar action="/manuals" label="Search manuals" placeholder="Brand, model or type" idPrefix="man" />
+          <p class="tool__label">Recently added</p>
+          <!-- Loaded live from Supabase so new manuals appear without a rebuild. -->
+          <LiveManuals server:defer limit={3} emptyText="New manuals are being added — ask us if you need one." />
+          <a href="/manuals" class="card-more">Browse all manuals <Icon name="arrowRight" size={16} /></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services --------------------------------------------------------------->
+  <section class="section section--alt" aria-labelledby="services-title">
+    <div class="container">
+      <div class="section-head section-head--split">
+        <div class="section-head">
+          <p class="eyebrow">What we do</p>
+          <h2 id="services-title" class="section-title">Services that keep your kitchen running</h2>
+        </div>
+        <a href="/services" class="btn btn--ghost">All services <Icon name="arrowRight" size={18} /></a>
+      </div>
+      <div class="grid grid--4">
+        {
+          services.map((s) => (
+            <article class="card card--link">
+              <span class="icon-tile">
+                <Icon name={s.icon} size={22} />
+              </span>
+              <h3>
+                <a href={`/services/${s.slug}`} class="stretched">
+                  {s.title}
+                </a>
+              </h3>
+              <p>{s.description}</p>
+              <span class="card-more" aria-hidden="true">
+                Learn more <Icon name="arrowRight" size={16} />
+              </span>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- For sale -------------------------------------------------------------->
+  <section class="section" aria-labelledby="sale-title">
+    <div class="container">
+      <div class="section-head section-head--split">
+        <div class="section-head">
+          <p class="eyebrow">Machines for sale</p>
+          <h2 id="sale-title" class="section-title">Tested, refurbished &amp; new machines</h2>
+          <p class="lead">Every machine is serviced by our engineers before it leaves the workshop.</p>
+        </div>
+        <a href="/for-sale" class="btn btn--ghost">View all machines <Icon name="arrowRight" size={18} /></a>
+      </div>
+      <!-- Loaded live from the database so new listings appear without a rebuild. -->
+      <LiveMachines server:defer limit={3}>
+        <LiveMachinesFallback slot="fallback" />
+      </LiveMachines>
+    </div>
+  </section>
+
+  <!-- Brands grid ---------------------------------------------------------->
+  <section class="section section--alt" aria-labelledby="brands-title">
+    <div class="container">
+      <div class="section-head section-head--center">
+        <p class="eyebrow">All major manufacturers</p>
+        <h2 id="brands-title" class="section-title">Brands we repair &amp; service</h2>
+      </div>
+      <ul class="brand-grid">
+        {
+          brands.map((b) => (
+            <li>
+              <a href={`/brands/${b.slug}`}>
+                <span>{b.name}</span>
+                <small>Repairs, codes &amp; manuals</small>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- Before & after ------------------------------------------------------->
+  <section class="section" aria-labelledby="jobs-title">
+    <div class="container">
+      <div class="section-head section-head--center">
+        <p class="eyebrow">Before &amp; after</p>
+        <h2 id="jobs-title" class="section-title">Recent jobs from our engineers</h2>
+      </div>
+      <div class="grid grid--3">
+        {
+          caseStudies.map((c) => (
+            <article class="card job">
+              <p class="job__meta">
+                {c.site} · {c.machine}
+              </p>
+              <h3>{c.title}</h3>
+              <dl class="job__ba">
+                <div class="job__before">
+                  <dt>Before</dt>
+                  <dd>{c.before}</dd>
+                </div>
+                <div class="job__after">
+                  <dt>After</dt>
+                  <dd>{c.after}</dd>
+                </div>
+              </dl>
+              <span class="badge badge--success">
+                <Icon name="clock" size={14} /> {c.turnaround}
+              </span>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials --------------------------------------------------------->
+  <section class="section section--alt" aria-labelledby="reviews-title">
+    <div class="container">
+      <div class="section-head section-head--center">
+        <p class="eyebrow">What clients say</p>
+        <h2 id="reviews-title" class="section-title">Trusted by kitchens across the North West</h2>
+      </div>
+      <div class="grid grid--3">
+        {
+          testimonials.slice(0, 3).map((t) => (
+            <figure class="card review">
+              <div class="review__stars" role="img" aria-label={`${t.rating} out of 5 stars`}>
+                {Array.from({ length: 5 }, (_, i) => (
+                  <Icon name="star" size={18} class={i < t.rating ? 'on' : 'off'} />
+                ))}
+              </div>
+              <blockquote>
+                <p>“{t.review}”</p>
+              </blockquote>
+              <figcaption>
+                <strong>{t.customerName}</strong>
+                <span>{t.companyName}</span>
+              </figcaption>
+            </figure>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Latest articles ------------------------------------------------------->
+  <section class="section" aria-labelledby="blog-title">
+    <div class="container">
+      <div class="section-head section-head--split">
+        <div class="section-head">
+          <p class="eyebrow">Advice &amp; news</p>
+          <h2 id="blog-title" class="section-title">Latest articles</h2>
+        </div>
+        <a href="/blog" class="btn btn--ghost">All articles <Icon name="arrowRight" size={18} /></a>
+      </div>
+      <div class="grid grid--3">
+        {
+          posts.slice(0, 3).map((p) => (
+            <article class="card card--link">
+              <time datetime={p.publishDate} class="post-date">
+                {formatDate(p.publishDate)}
+              </time>
+              <h3>
+                <a href={`/blog/${p.slug}`} class="stretched">
+                  {p.title}
+                </a>
+              </h3>
+              <p>{p.excerpt}</p>
+              <span class="card-more" aria-hidden="true">
+                Read article <Icon name="arrowRight" size={16} />
+              </span>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <CtaBanner />
+</BaseLayout>
+
+<script>
+  import { initFilters } from '@/components/search/filter';
+  initFilters();
+</script>
+
+<style>
+  /* Hero */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding-bottom: clamp(2.5rem, 2rem + 2vw, 4rem);
+    background:
+      radial-gradient(50rem 30rem at 80% 0%, rgb(34 184 240 / 0.18), transparent 60%),
+      radial-gradient(40rem 24rem at 0% 100%, rgb(29 78 216 / 0.18), transparent 60%),
+      var(--bg);
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgb(148 163 184 / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(148 163 184 / 0.05) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(70% 60% at 60% 30%, black, transparent);
+    pointer-events: none;
+  }
+  .hero__grid {
+    position: relative;
+    display: grid;
+    gap: 2.5rem;
+    align-items: center;
+    padding-block: clamp(2.5rem, 1.5rem + 5vw, 5.5rem) clamp(2rem, 1.5rem + 2vw, 3rem);
+  }
+  @media (min-width: 960px) {
+    .hero__grid {
+      grid-template-columns: 1.1fr 0.9fr;
+    }
+  }
+  .hero__copy {
+    display: grid;
+    gap: 1.25rem;
+    justify-items: start;
+  }
+  .hero h1 {
+    font-size: clamp(2.3rem, 1.5rem + 3.6vw, 4.2rem);
+    letter-spacing: -0.035em;
+    line-height: 1.04;
+  }
+  .hero h1 span {
+    display: block;
+    color: var(--accent);
+  }
+  .hero__checks {
+    font-weight: 500;
+  }
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .hero__search {
+    width: 100%;
+    max-width: 36rem;
+  }
+  .hero__visual {
+    position: relative;
+    display: none;
+    aspect-ratio: 1;
+    max-width: 30rem;
+    width: 100%;
+    justify-self: center;
+  }
+  @media (min-width: 960px) {
+    .hero__visual {
+      display: block;
+    }
+  }
+  .hero__glow {
+    position: absolute;
+    inset: 12%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgb(34 184 240 / 0.35), transparent 65%);
+    filter: blur(20px);
+  }
+  .hero__visual :global(.hero__machine) {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .hero__float {
+    position: absolute;
+    right: 0;
+    bottom: 12%;
+    display: grid;
+    gap: 0.1rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius);
+    background: rgb(14 22 39 / 0.92);
+    border: 1px solid var(--accent-line);
+    box-shadow: var(--shadow);
+    color: var(--text);
+    text-decoration: none;
+  }
+  .hero__float strong {
+    font-size: var(--fs-2xl);
+    color: var(--accent);
+    line-height: 1;
+  }
+  .hero__float span {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+  }
+  .hero__float-phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.35rem;
+    color: var(--text-2);
+  }
+
+  /* Brands strip */
+  .brands-strip {
+    border-block: 1px solid var(--border);
+    background: var(--bg-raised);
+    padding-block: 1.5rem;
+  }
+  .brands-strip .container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 2rem;
+  }
+  .brands-strip ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 2rem;
+  }
+  .brands-strip a {
+    color: var(--text-2);
+    font-weight: 800;
+    font-size: var(--fs-lg);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+  .brands-strip a:hover {
+    color: var(--accent);
+  }
+
+  /* Search tools */
+  .tool {
+    gap: 1.1rem;
+  }
+  .tool__head {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+  .tool__head h3 {
+    font-size: var(--fs-xl);
+  }
+  .tool__results {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 0.4rem;
+  }
+  .tool__results a {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    text-decoration: none;
+  }
+  .tool__results a:hover {
+    border-color: var(--accent-line);
+  }
+  .tool__results strong,
+  .tool__results small {
+    display: block;
+  }
+  .tool__results small {
+    color: var(--text-2);
+  }
+  .tool__code {
+    display: grid;
+    place-items: center;
+    min-width: 2.75rem;
+    height: 2.25rem;
+    padding-inline: 0.5rem;
+    border-radius: 6px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-weight: 700;
+  }
+  .tool__label {
+    font-size: var(--fs-xs) !important;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-3) !important;
+    margin-bottom: -0.5rem;
+  }
+  .tool__empty {
+    color: var(--text-2);
+    font-size: var(--fs-sm);
+    padding: 0.5rem 0;
+  }
+
+  /* Brand grid */
+  .brand-grid {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
+    gap: 0.75rem;
+  }
+  .brand-grid a {
+    display: grid;
+    gap: 0.2rem;
+    padding: 1.4rem 1.25rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color 0.2s var(--ease);
+  }
+  .brand-grid a:hover {
+    border-color: var(--accent-line);
+  }
+  .brand-grid span {
+    font-weight: 800;
+    font-size: var(--fs-lg);
+    letter-spacing: 0.02em;
+  }
+  .brand-grid small {
+    color: var(--text-3);
+  }
+
+  /* Jobs */
+  .job__meta {
+    font-size: var(--fs-xs) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-3) !important;
+    font-weight: 700;
+  }
+  .job__ba {
+    display: grid;
+    gap: 0.6rem;
+  }
+  .job__ba > div {
+    padding: 0.8rem 0.9rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    border-left: 3px solid var(--danger);
+  }
+  .job__ba > .job__after {
+    border-left-color: var(--success);
+  }
+  .job__ba dt {
+    font-size: var(--fs-xs);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text);
+  }
+  .job__ba dd {
+    color: var(--text-2);
+    font-size: var(--fs-sm);
+  }
+  .job .badge {
+    align-self: flex-start;
+    margin-top: auto;
+  }
+
+  /* Reviews */
+  .review {
+    margin: 0;
+  }
+  .review__stars {
+    display: flex;
+    gap: 0.15rem;
+  }
+  .review__stars :global(.on) {
+    color: #fbbf24;
+    fill: #fbbf24;
+  }
+  .review__stars :global(.off) {
+    color: var(--text-3);
+  }
+  .review blockquote p {
+    color: var(--text);
+    font-size: var(--fs-md);
+  }
+  .review figcaption {
+    margin-top: auto;
+    display: grid;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+    font-size: var(--fs-sm);
+  }
+  .review figcaption span {
+    color: var(--text-2);
+  }
+
+  .post-date {
+    font-size: var(--fs-xs);
+    color: var(--text-3);
+    font-weight: 600;
+  }
+</style>

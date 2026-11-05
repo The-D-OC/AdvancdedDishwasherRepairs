@@ -1,0 +1,120 @@
+---
+/**
+ * Search form with optional brand facet. Plain GET form, so it works without
+ * JavaScript; listing pages enhance it with instant filtering.
+ */
+import Icon from '@/components/ui/Icon.astro';
+
+interface Props {
+  action: string;
+  label: string;
+  placeholder: string;
+  brands?: string[];
+  idPrefix: string;
+  size?: 'md' | 'lg';
+}
+
+const { action, label, placeholder, brands, idPrefix, size = 'md' } = Astro.props;
+---
+
+<form action={action} method="get" role="search" class:list={['search', `search--${size}`]}>
+  <label for={`${idPrefix}-q`} class="sr-only">{label}</label>
+  <span class="search__icon" aria-hidden="true"><Icon name="search" size={20} /></span>
+  <input
+    id={`${idPrefix}-q`}
+    name="q"
+    type="search"
+    class="search__input"
+    placeholder={placeholder}
+    autocomplete="off"
+    enterkeyhint="search"
+    data-filter-input
+  />
+  {
+    brands && brands.length > 0 && (
+      <>
+        <label for={`${idPrefix}-brand`} class="sr-only">
+          Filter by brand
+        </label>
+        <select id={`${idPrefix}-brand`} name="brand" class="search__select" data-filter-select>
+          <option value="">All brands</option>
+          {brands.map((b) => (
+            <option value={b}>{b}</option>
+          ))}
+        </select>
+      </>
+    )
+  }
+  <button type="submit" class="btn btn--primary search__btn">
+    <span class="search__btn-text">Search</span>
+    <Icon name="arrowRight" size={18} class="search__btn-icon" />
+  </button>
+</form>
+
+<style>
+  .search {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem;
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: calc(var(--radius) + 2px);
+    position: relative;
+  }
+  .search:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .search__icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    translate: 0 -50%;
+    color: var(--text-3);
+    pointer-events: none;
+  }
+  .search__input {
+    flex: 1 1 14rem;
+    min-width: 0;
+    min-height: 48px;
+    padding: 0 0.75rem 0 2.6rem;
+    background: transparent;
+    border: 0;
+    font-size: var(--fs-md);
+  }
+  .search__input:focus-visible,
+  .search__select:focus-visible {
+    box-shadow: none;
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .search__input::placeholder {
+    color: var(--text-3);
+  }
+  .search__select {
+    min-height: 44px;
+    padding: 0 0.75rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+  }
+  .search--lg .search__input {
+    min-height: 56px;
+    font-size: var(--fs-lg);
+  }
+  .search__btn {
+    min-height: 44px;
+  }
+  @media (max-width: 520px) {
+    .search__icon {
+      top: 1.75rem;
+    }
+    .search__select,
+    .search__btn {
+      flex: 1 1 auto;
+    }
+  }
+</style>

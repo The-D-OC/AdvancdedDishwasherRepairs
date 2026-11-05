@@ -1,0 +1,48 @@
+---
+import ManualForm from '@/components/admin/ManualForm.astro';
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import { createManual, emptyManualInput, manualSlugTaken, parseManualForm, uploadPdf, type ManualInput } from '@/lib/manuals';
+
+export const prerender = false;
+
+const db = Astro.locals.supabase!;
+let values: ManualInput = emptyManualInput();
+let errors: Record<string, string> = {};
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const parsed = parseManualForm(form);
+  values = parsed.input;
+  errors = parsed.errors;
+
+  if (values.slug && !errors['slug']) {
+    const base = values.slug;
+    for (let n = 2; await manualSlugTaken(db, values.slug); n++) values.slug = `${base}-${n}`;
+  }
+
+  if (Object.keys(errors).length === 0) {
+    let pdf: { key: string | null; size: number | null } = { key: null, size: null };
+    const file = form.get('pdf');
+    if (file instanceof File && file.size > 0) {
+      const uploaded = await uploadPdf(db, file, values.slug);
+      if ('error' in uploaded) errors['pdf'] = uploaded.error;
+      else pdf = uploaded;
+    }
+    if (Object.keys(errors).length === 0) {
+      const id = await createManual(db, values, pdf);
+      return Astro.redirect(`/admin/manuals/${id}?created=1`, 303);
+    }
+  }
+}
+---
+
+<AdminLayout title="Add manual">
+  <div class="admin-head">
+    <div>
+      <a href="/admin/manuals">← All manuals</a>
+      <h1>Add a manual</h1>
+    </div>
+  </div>
+  {Object.keys(errors).length > 0 && <p class="notice notice--error" role="alert">Please fix the highlighted fields{errors['pdf'] ? ' and choose the PDF again' : ''}.</p>}
+  <ManualForm mode="new" values={values} errors={errors} />
+</AdminLayout>

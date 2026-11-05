@@ -1,0 +1,111 @@
+---
+import SearchBar from '@/components/search/SearchBar.astro';
+import CtaBanner from '@/components/ui/CtaBanner.astro';
+import Icon from '@/components/ui/Icon.astro';
+import PageHero from '@/components/ui/PageHero.astro';
+import { telHref } from '@/config/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getFaultCodes } from '@/lib/content';
+
+const codes = await getFaultCodes();
+const brands = [...new Set(codes.map((c) => c.brand))].sort();
+const crumbs = [{ label: 'Fault Codes', href: '/fault-codes' }];
+---
+
+<BaseLayout
+  title="Commercial Dishwasher Fault Codes"
+  description="Look up commercial dishwasher and glasswasher fault codes by brand and model — what each code means, common causes and recommended fixes."
+  breadcrumbs={crumbs}
+>
+  <PageHero
+    eyebrow="Fault code library"
+    title="Dishwasher fault codes"
+    lead="Search by code, brand or model to see what an error means, the usual causes and what to check."
+    breadcrumbs={crumbs}
+  />
+
+  <section class="section">
+    <div class="container" data-filter-root data-filter-noun="code">
+      <div class="search-row">
+        <SearchBar action="/fault-codes" label="Search fault codes" placeholder="e.g. E2, F1, Hobart AM15" brands={brands} idPrefix="codes" size="lg" />
+        <p class="count" aria-live="polite" data-filter-count>{codes.length} codes</p>
+      </div>
+
+      <ul class="link-list">
+        {
+          codes.map((f) => (
+            <li data-filter-item data-facet={f.brand} data-search={`${f.brand} ${f.model} ${f.code} ${f.title} ${f.description}`}>
+              <a href={`/fault-codes/${f.slug}`}>
+                <span class="code">{f.code}</span>
+                <span>
+                  <strong>
+                    {f.brand} {f.model} — {f.title}
+                  </strong>
+                  <small>{f.description}</small>
+                </span>
+                <Icon name="arrowRight" size={16} />
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+
+      <div class="card empty" data-filter-empty hidden>
+        <h2>Can’t find your code?</h2>
+        <p>Our library is growing. Call an engineer and we’ll talk you through it.</p>
+        <div class="empty__actions">
+          <a href={telHref} class="btn btn--primary"><Icon name="phone" size={18} /> Call an engineer</a>
+          <a href="/booking" class="btn btn--secondary">Book a repair</a>
+        </div>
+      </div>
+
+      <p class="disclaimer">
+        <Icon name="alert" size={16} /> Fault codes vary by model and software version. Always isolate power and water before
+        inspecting a machine — if in doubt, call a qualified engineer.
+      </p>
+    </div>
+  </section>
+
+  <CtaBanner title="Can’t clear the fault?" />
+</BaseLayout>
+
+<script>
+  import { initFilters } from '@/components/search/filter';
+  initFilters();
+</script>
+
+<style>
+  .search-row {
+    display: grid;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .count {
+    color: var(--text-2);
+    font-size: var(--fs-sm);
+  }
+  .empty {
+    margin-top: 1rem;
+    align-items: flex-start;
+  }
+  .empty h2 {
+    font-size: var(--fs-xl);
+  }
+  .empty__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .disclaimer {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    margin-top: 2rem;
+    color: var(--text-3);
+    font-size: var(--fs-sm);
+  }
+  .disclaimer :global(svg) {
+    flex: none;
+    margin-top: 0.2em;
+  }
+</style>

@@ -1,0 +1,133 @@
+---
+import MachineForm from '@/components/admin/MachineForm.astro';
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import {
+  collectImages,
+  deleteImages,
+  deleteMachine,
+  getMachineById,
+  machineToInput,
+  parseMachineForm,
+  slugTaken,
+  updateMachine,
+  type MachineInput,
+} from '@/lib/machines';
+
+export const prerender = false;
+
+const db = Astro.locals.supabase!;
+const id = Number(Astro.params['id']);
+const machine = Number.isInteger(id) ? await getMachineById(db, id) : null;
+if (!machine) {
+  return Astro.redirect('/admin', 303);
+}
+
+let values: MachineInput = machineToInput(machine);
+let errors: Record<string, string> = {};
+let imageErrors: string[] = [];
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+
+  if (form.get('_action') === 'delete') {
+    await deleteMachine(db, id);
+    return Astro.redirect('/admin?deleted=1', 303);
+  }
+
+  const parsed = parseMachineForm(form);
+  values = parsed.input;
+  errors = parsed.errors;
+  if (values.slug && !errors['slug'] && (await slugTaken(db, values.slug, id))) {
+    errors['slug'] = 'Another listing already uses this URL.';
+  }
+
+  if (Object.keys(errors).length === 0) {
+    const { images, removed, errors: imgErrs } = await collectImages(db, form, machine.images, values.slug, values.title);
+    imageErrors = imgErrs;
+    await updateMachine(db, id, values, images);
+    await deleteImages(db, removed);
+    if (imageErrors.length === 0) {
+      return Astro.redirect(`/admin/machines/${id}?saved=1`, 303);
+    }
+    machine.images = images;
+  }
+}
+
+const params = Astro.url.searchParams;
+const notice = params.get('created') ? 'Listing published.' : params.get('saved') ? 'Changes saved — the website is updated.' : '';
+const hasErrors = Object.keys(errors).length > 0 || imageErrors.length > 0;
+const live = values.status !== 'draft';
+---
+
+<AdminLayout title={`Edit ${machine.title}`}>
+  <div class="admin-head">
+    <div>
+      <a href="/admin">← All listings</a>
+      <h1>{machine.title}</h1>
+    </div>
+    {
+      live && (
+        <a href={`/for-sale/${machine.slug}`} class="btn btn--ghost" target="_blank" rel="noopener">
+          View on website ↗
+        </a>
+      )
+    }
+  </div>
+
+  {notice && <p class="notice notice--ok" role="status">{notice}</p>}
+  {
+    hasErrors && (
+      <div class="notice notice--error" role="alert">
+        {Object.keys(errors).length > 0 ? 'Please fix the highlighted fields — nothing was saved.' : 'Saved, but some photos could not be uploaded:'}
+        {imageErrors.length > 0 && (
+          <ul>
+            {imageErrors.map((e) => (
+              <li>{e}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+    )
+  }
+
+  <MachineForm mode="edit" values={values} errors={errors} images={machine.images} />
+
+  <form method="post" class="danger card" data-delete-form>
+    <input type="hidden" name="_action" value="delete" />
+    <div>
+      <h2>Delete this listing</h2>
+      <p>Removes the listing and its photos permanently. To keep it but hide it, set the status to Sold or Draft instead.</p>
+    </div>
+    <button type="submit" class="btn btn--ghost danger__btn">Delete listing</button>
+  </form>
+</AdminLayout>
+
+<script>
+  document.querySelector<HTMLFormElement>('[data-delete-form]')?.addEventListener('submit', (e) => {
+    if (!confirm('Delete this listing and its photos? This cannot be undone.')) e.preventDefault();
+  });
+</script>
+
+<style>
+  .danger {
+    margin-top: 2.5rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-color: rgb(248 113 113 / 0.35);
+  }
+  .danger h2 {
+    font-size: var(--fs-lg);
+  }
+  .danger__btn {
+    color: var(--danger);
+    border-color: rgb(248 113 113 / 0.5);
+  }
+  .danger__btn:hover {
+    color: #fff;
+    background: var(--danger);
+    border-color: var(--danger);
+  }
+</style>

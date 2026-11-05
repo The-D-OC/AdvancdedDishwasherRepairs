@@ -1,0 +1,113 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { Image, getImage } from 'astro:assets';
+
+import ContactAside from '@/components/ui/ContactAside.astro';
+import CtaBanner from '@/components/ui/CtaBanner.astro';
+import PageHero from '@/components/ui/PageHero.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getBlogPosts } from '@/lib/content';
+import { formatDate } from '@/lib/format';
+import { articleSchema } from '@/lib/seo';
+
+export const getStaticPaths = (async () => {
+  const posts = await getBlogPosts();
+  return posts.map((post) => ({
+    params: { article: post.slug },
+    props: { post, more: posts.filter((p) => p.slug !== post.slug).slice(0, 3) },
+  }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { post, more } = Astro.props as Props;
+const path = `/blog/${post.slug}`;
+const crumbs = [
+  { label: 'Blog', href: '/blog' },
+  { label: post.title, href: path },
+];
+const description = post.seoDescription ?? post.excerpt;
+const image = post.featuredImage
+  ? new URL((await getImage({ src: post.featuredImage.src, width: 1200, format: 'jpg' })).src, Astro.site).toString()
+  : undefined;
+---
+
+<BaseLayout
+  title={post.seoTitle ?? post.title}
+  description={description}
+  breadcrumbs={crumbs}
+  ogType="article"
+  ogImage={image}
+  jsonLd={[articleSchema({ title: post.title, description, path, date: post.publishDate, author: post.author, image })]}
+>
+  <PageHero title={post.title} lead={post.excerpt} breadcrumbs={crumbs}>
+    <p class="byline">
+      <time datetime={post.publishDate}>{formatDate(post.publishDate)}</time> · {post.author}
+    </p>
+  </PageHero>
+
+  <section class="section">
+    <div class="container with-aside">
+      <article class="article">
+        {
+          post.featuredImage && (
+            <Image
+              src={post.featuredImage.src}
+              alt={post.featuredImage.alt}
+              widths={[640, 960, 1280]}
+              sizes="(min-width: 1000px) 760px, 92vw"
+              class="article__img"
+              loading="eager"
+              fetchpriority="high"
+            />
+          )
+        }
+        <div class="prose">
+          {post.content.map((p) => <p>{p}</p>)}
+        </div>
+
+        {
+          more.length > 0 && (
+            <nav class="more" aria-labelledby="more-title">
+              <h2 id="more-title">More articles</h2>
+              <ul class="link-list">
+                {more.map((p) => (
+                  <li>
+                    <a href={`/blog/${p.slug}`}>
+                      <span />
+                      <span>
+                        <strong>{p.title}</strong>
+                        <small>{formatDate(p.publishDate)}</small>
+                      </span>
+                      <span aria-hidden="true">→</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )
+        }
+      </article>
+      <ContactAside />
+    </div>
+  </section>
+
+  <CtaBanner />
+</BaseLayout>
+
+<style>
+  .byline {
+    color: var(--text-2);
+    font-size: var(--fs-sm);
+  }
+  .article {
+    display: grid;
+    gap: 2rem;
+  }
+  .article__img {
+    border-radius: var(--radius);
+  }
+  .more h2 {
+    font-size: var(--fs-xl);
+    margin-bottom: 1rem;
+  }
+</style>

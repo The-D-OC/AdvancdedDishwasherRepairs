@@ -1,0 +1,130 @@
+---
+import ManualForm from '@/components/admin/ManualForm.astro';
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import {
+  deleteManual,
+  deletePdf,
+  getManualById,
+  manualSlugTaken,
+  manualToInput,
+  parseManualForm,
+  updateManual,
+  uploadPdf,
+  type ManualInput,
+} from '@/lib/manuals';
+
+export const prerender = false;
+
+const db = Astro.locals.supabase!;
+const id = Number(Astro.params['id']);
+const manual = Number.isInteger(id) ? await getManualById(db, id) : null;
+if (!manual) {
+  return Astro.redirect('/admin/manuals', 303);
+}
+
+let values: ManualInput = manualToInput(manual);
+let errors: Record<string, string> = {};
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+
+  if (form.get('_action') === 'delete') {
+    await deleteManual(db, id);
+    return Astro.redirect('/admin/manuals?deleted=1', 303);
+  }
+
+  const parsed = parseManualForm(form);
+  values = parsed.input;
+  errors = parsed.errors;
+  if (values.slug && !errors['slug'] && (await manualSlugTaken(db, values.slug, id))) {
+    errors['slug'] = 'Another manual already uses this URL.';
+  }
+
+  if (Object.keys(errors).length === 0) {
+    let pdf = { key: manual.pdfKey ?? null, size: manual.pdfSize ?? null };
+    let oldKey: string | undefined;
+
+    const file = form.get('pdf');
+    if (file instanceof File && file.size > 0) {
+      const uploaded = await uploadPdf(db, file, values.slug);
+      if ('error' in uploaded) errors['pdf'] = uploaded.error;
+      else {
+        oldKey = manual.pdfKey;
+        pdf = uploaded;
+      }
+    } else if (form.get('removePdf') === 'on') {
+      oldKey = manual.pdfKey;
+      pdf = { key: null, size: null };
+    }
+
+    if (Object.keys(errors).length === 0) {
+      await updateManual(db, id, values, pdf);
+      if (oldKey && oldKey !== pdf.key) await deletePdf(db, oldKey);
+      return Astro.redirect(`/admin/manuals/${id}?saved=1`, 303);
+    }
+  }
+}
+
+const params = Astro.url.searchParams;
+const notice = params.get('created') ? 'Manual added.' : params.get('saved') ? 'Changes saved — the website is updated.' : '';
+---
+
+<AdminLayout title={`Edit ${manual.title}`}>
+  <div class="admin-head">
+    <div>
+      <a href="/admin/manuals">← All manuals</a>
+      <h1>{manual.title}</h1>
+    </div>
+    {
+      manual.published && (
+        <a href={`/manuals/${manual.slug}`} class="btn btn--ghost" target="_blank" rel="noopener">
+          View on website ↗
+        </a>
+      )
+    }
+  </div>
+
+  {notice && <p class="notice notice--ok" role="status">{notice}</p>}
+  {Object.keys(errors).length > 0 && <p class="notice notice--error" role="alert">Please fix the highlighted fields — nothing was saved.</p>}
+
+  <ManualForm mode="edit" values={values} errors={errors} pdf={manual.pdfUrl ? { url: manual.pdfUrl, size: manual.pdfSize } : undefined} />
+
+  <form method="post" class="danger card" data-delete-form>
+    <input type="hidden" name="_action" value="delete" />
+    <div>
+      <h2>Delete this manual</h2>
+      <p>Removes the manual and its PDF permanently. To hide it instead, untick “Published”.</p>
+    </div>
+    <button type="submit" class="btn btn--ghost danger__btn">Delete manual</button>
+  </form>
+</AdminLayout>
+
+<script>
+  document.querySelector<HTMLFormElement>('[data-delete-form]')?.addEventListener('submit', (e) => {
+    if (!confirm('Delete this manual and its PDF? This cannot be undone.')) e.preventDefault();
+  });
+</script>
+
+<style>
+  .danger {
+    margin-top: 2.5rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-color: rgb(248 113 113 / 0.35);
+  }
+  .danger h2 {
+    font-size: var(--fs-lg);
+  }
+  .danger__btn {
+    color: var(--danger);
+    border-color: rgb(248 113 113 / 0.5);
+  }
+  .danger__btn:hover {
+    color: #fff;
+    background: var(--danger);
+    border-color: var(--danger);
+  }
+</style>

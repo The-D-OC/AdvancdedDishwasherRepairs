@@ -1,0 +1,565 @@
+---
+/**
+ * Add / edit form for a machine listing. Posts back to the current page.
+ * With JavaScript, photos are resized in the browser (1600px + 640px thumb,
+ * WebP) before upload so large phone photos don't slow the site down.
+ */
+import { SITE } from '@/config/site';
+import { MAX_IMAGES, type MachineInput, mediaUrl } from '@/lib/machines';
+import { MACHINE_TYPES, type MachineImage } from '@/types/content';
+
+interface Props {
+  values: MachineInput;
+  errors?: Record<string, string>;
+  images?: MachineImage[];
+  mode: 'new' | 'edit';
+}
+
+const { values: v, errors = {}, images = [], mode } = Astro.props;
+const err = (name: string) => errors[name];
+const describedBy = (name: string, hint = false) =>
+  [hint ? `${name}-hint` : '', errors[name] ? `${name}-err` : ''].filter(Boolean).join(' ') || undefined;
+const specsText = v.specs.map((s) => (s.value ? `${s.label}: ${s.value}` : s.label)).join('\n');
+const priceValue = Number.isFinite(v.price) ? String(v.price) : '';
+const host = new URL(SITE.url).host;
+---
+
+<form method="post" enctype="multipart/form-data" class="mform" data-machine-form novalidate>
+  <div class="mform__main">
+    <!-- Details --------------------------------------------------------- -->
+    <fieldset class="card panel">
+      <legend>Listing details</legend>
+
+      <div class="field">
+        <label for="title">Title <span class="req">*</span></label>
+        <input id="title" name="title" class="input" required maxlength="200" value={v.title} aria-invalid={err('title') ? 'true' : undefined} aria-describedby={describedBy('title')} data-title />
+        {err('title') && <p class="field-error" id="title-err">{err('title')}</p>}
+      </div>
+
+      <div class="two">
+        <div class="field">
+          <label for="brand">Brand <span class="req">*</span></label>
+          <input id="brand" name="brand" class="input" required maxlength="80" value={v.brand} list="brand-list" aria-invalid={err('brand') ? 'true' : undefined} aria-describedby={describedBy('brand')} />
+          <datalist id="brand-list">
+            {['Hobart', 'Winterhalter', 'Classeq', 'Maidaid', 'Meiko', 'Electrolux', 'Fagor', 'Comenda'].map((b) => <option value={b} />)}
+          </datalist>
+          {err('brand') && <p class="field-error" id="brand-err">{err('brand')}</p>}
+        </div>
+        <div class="field">
+          <label for="model">Model</label>
+          <input id="model" name="model" class="input" maxlength="80" value={v.model} />
+        </div>
+      </div>
+
+      <div class="two">
+        <div class="field">
+          <label for="machineType">Machine type <span class="req">*</span></label>
+          <select id="machineType" name="machineType" class="select" aria-describedby={describedBy('machineType')}>
+            {MACHINE_TYPES.map((t) => <option value={t} selected={v.machineType === t}>{t}</option>)}
+          </select>
+          {err('machineType') && <p class="field-error" id="machineType-err">{err('machineType')}</p>}
+        </div>
+        <div class="field">
+          <label for="reference">Stock reference <span class="req">*</span></label>
+          <input id="reference" name="reference" class="input" required maxlength="40" value={v.reference} aria-invalid={err('reference') ? 'true' : undefined} aria-describedby={describedBy('reference')} />
+          {err('reference') && <p class="field-error" id="reference-err">{err('reference')}</p>}
+        </div>
+      </div>
+
+      <fieldset class="field">
+        <legend>Condition <span class="req">*</span></legend>
+        <div class="radios">
+          {
+            (['new', 'refurbished', 'used'] as const).map((c) => (
+              <label>
+                <input type="radio" name="condition" value={c} checked={v.condition === c} /> {c[0]!.toUpperCase() + c.slice(1)}
+              </label>
+            ))
+          }
+        </div>
+        {err('condition') && <p class="field-error">{err('condition')}</p>}
+      </fieldset>
+
+      <div class="two">
+        <div class="field">
+          <label for="price">Price (£) <span class="req">*</span></label>
+          <input id="price" name="price" class="input" inputmode="numeric" required value={priceValue} placeholder="e.g. 1850" aria-invalid={err('price') ? 'true' : undefined} aria-describedby={describedBy('price')} />
+          {err('price') && <p class="field-error" id="price-err">{err('price')}</p>}
+        </div>
+        <div class="field">
+          <label for="wasPrice">Was / RRP (£)</label>
+          <input id="wasPrice" name="wasPrice" class="input" inputmode="numeric" value={v.wasPrice ?? ''} aria-describedby={describedBy('wasPrice', true)} />
+          <p class="hint" id="wasPrice-hint">Optional — shown crossed out next to the price.</p>
+          {err('wasPrice') && <p class="field-error" id="wasPrice-err">{err('wasPrice')}</p>}
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="summary">Short summary <span class="req">*</span></label>
+        <input id="summary" name="summary" class="input" required maxlength="200" value={v.summary} aria-invalid={err('summary') ? 'true' : undefined} aria-describedby={describedBy('summary', true)} data-summary />
+        <p class="hint" id="summary-hint">One sentence shown on listing cards. Also used for Google if the SEO description is blank.</p>
+        {err('summary') && <p class="field-error" id="summary-err">{err('summary')}</p>}
+      </div>
+
+      <div class="field">
+        <label for="description">Full description</label>
+        <textarea id="description" name="description" class="textarea" rows="7" maxlength="8000" aria-describedby="description-hint">{v.description}</textarea>
+        <p class="hint" id="description-hint">Leave a blank line between paragraphs.</p>
+      </div>
+
+      <div class="two">
+        <div class="field">
+          <label for="specs">Specifications</label>
+          <textarea id="specs" name="specs" class="textarea" rows="5" aria-describedby="specs-hint" placeholder={'Power: 3-phase\nBasket size: 500 × 500 mm'}>{specsText}</textarea>
+          <p class="hint" id="specs-hint">One per line, as <strong>Label: value</strong>.</p>
+        </div>
+        <div class="field">
+          <label for="highlights">Highlights</label>
+          <textarea id="highlights" name="highlights" class="textarea" rows="5" aria-describedby="highlights-hint" placeholder={'Fully serviced\nNew door seals'}>{v.highlights.join('\n')}</textarea>
+          <p class="hint" id="highlights-hint">One per line — the first three show on the card.</p>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="warranty">Warranty</label>
+        <input id="warranty" name="warranty" class="input" maxlength="120" value={v.warranty} placeholder="e.g. 90-day parts & labour warranty" />
+      </div>
+    </fieldset>
+
+    <!-- Photos ----------------------------------------------------------- -->
+    <fieldset class="card panel">
+      <legend>Photos</legend>
+      <p class="hint">Up to {MAX_IMAGES} photos. The first photo is the main image on cards, the listing page and when shared. Describe each photo in its alt text — it helps Google Images and screen-reader users.</p>
+
+      {
+        images.length > 0 && (
+          <ul class="photos">
+            {images.map((img, i) => (
+              <li class="photo">
+                <img src={mediaUrl(img.thumbKey ?? img.key)} alt="" width="200" height="150" loading="lazy" />
+                <div class="photo__fields">
+                  <label class="sr-only" for={`alt_${i}`}>
+                    Alt text for photo {i + 1}
+                  </label>
+                  <input id={`alt_${i}`} name={`alt_${i}`} class="input" value={img.alt} maxlength="160" placeholder="Describe this photo" />
+                  <div class="photo__opts">
+                    <label>
+                      <input type="radio" name="cover" value={i} checked={i === 0} /> Main photo
+                    </label>
+                    <label class="photo__remove">
+                      <input type="checkbox" name={`remove_${i}`} /> Remove
+                    </label>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+
+      <div class="field">
+        <label for="photos">Add photos</label>
+        <input id="photos" name="photos" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple class="file" data-photos />
+        <p class="hint">JPEG, PNG, WebP or AVIF. Large photos are resized automatically.</p>
+        <ul class="previews" data-previews></ul>
+      </div>
+    </fieldset>
+
+    <!-- SEO ----------------------------------------------------------------->
+    <fieldset class="card panel">
+      <legend>Search engines (SEO)</legend>
+      <p class="hint">Optional — sensible defaults are generated from the title, price and summary.</p>
+
+      <div class="field">
+        <label for="slug">Page URL</label>
+        <div class="slug">
+          <span>{host}/for-sale/</span>
+          <input id="slug" name="slug" class="input" maxlength="80" value={v.slug} aria-invalid={err('slug') ? 'true' : undefined} aria-describedby={describedBy('slug', true)} data-slug data-touched={mode === 'edit' ? 'true' : undefined} />
+        </div>
+        <p class="hint" id="slug-hint">Lower-case words separated by hyphens. Changing it later changes the link.</p>
+        {err('slug') && <p class="field-error" id="slug-err">{err('slug')}</p>}
+      </div>
+
+      <div class="field">
+        <label for="seoTitle">SEO title <span class="counter" data-counter-for="seoTitle" data-max="60"></span></label>
+        <input id="seoTitle" name="seoTitle" class="input" maxlength="70" value={v.seoTitle} data-seo-title placeholder="Defaults to “Title For Sale — £price”" />
+      </div>
+      <div class="field">
+        <label for="seoDescription">SEO description <span class="counter" data-counter-for="seoDescription" data-max="155"></span></label>
+        <textarea id="seoDescription" name="seoDescription" class="textarea" rows="2" maxlength="170" data-seo-desc placeholder="Defaults to the short summary">{v.seoDescription}</textarea>
+      </div>
+
+      <div class="serp" aria-label="Google search preview">
+        <p class="serp__url">{host} › for-sale › <span data-serp-slug>{v.slug || 'your-machine'}</span></p>
+        <p class="serp__title" data-serp-title></p>
+        <p class="serp__desc" data-serp-desc></p>
+      </div>
+    </fieldset>
+  </div>
+
+  <!-- Sidebar ---------------------------------------------------------------->
+  <aside class="mform__side">
+    <div class="card panel sticky">
+      <fieldset class="field">
+        <legend>Status</legend>
+        <div class="status-opts">
+          {
+            (
+              [
+                ['available', 'Available', 'Shown with call / email buttons'],
+                ['reserved', 'Reserved', 'Shown with a Reserved badge'],
+                ['sold', 'Sold', 'Greyed out, no contact buttons'],
+                ['draft', 'Draft', 'Hidden from the website'],
+              ] as const
+            ).map(([value, label, hint]) => (
+              <label>
+                <input type="radio" name="status" value={value} checked={v.status === value} />
+                <span>
+                  <strong>{label}</strong>
+                  <small>{hint}</small>
+                </span>
+              </label>
+            ))
+          }
+        </div>
+      </fieldset>
+      <label class="check">
+        <input type="checkbox" name="featured" checked={v.featured} /> Feature on the home page
+      </label>
+      <button type="submit" class="btn btn--primary btn--lg btn--block" data-save>
+        <span data-save-label>{mode === 'new' ? 'Publish listing' : 'Save changes'}</span>
+      </button>
+      <p class="hint" data-save-status aria-live="polite"></p>
+    </div>
+  </aside>
+</form>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-machine-form]');
+
+  if (form) {
+    const $ = <T extends Element>(sel: string) => form.querySelector<T>(sel);
+    const title = $<HTMLInputElement>('[data-title]')!;
+    const slug = $<HTMLInputElement>('[data-slug]')!;
+    const summary = $<HTMLInputElement>('[data-summary]')!;
+    const seoTitle = $<HTMLInputElement>('[data-seo-title]')!;
+    const seoDesc = $<HTMLTextAreaElement>('[data-seo-desc]')!;
+    const price = $<HTMLInputElement>('#price')!;
+
+    const slugify = (s: string) =>
+      s.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 80);
+
+    // Auto-fill slug from the title until the user edits it.
+    slug.addEventListener('input', () => (slug.dataset['touched'] = 'true'));
+    title.addEventListener('input', () => {
+      if (!slug.dataset['touched']) slug.value = slugify(title.value);
+      updatePreview();
+    });
+
+    // Google preview + character counters.
+    const fmt = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 });
+    function updatePreview() {
+      const p = Number(price.value.replace(/[£,\s]/g, ''));
+      const autoTitle = `${title.value || 'Machine title'} For Sale${Number.isFinite(p) && p > 0 ? ` — ${fmt.format(p)}` : ''} | Advanced Dishwasher Repairs`;
+      const t = seoTitle.value ? `${seoTitle.value} | Advanced Dishwasher Repairs` : autoTitle;
+      const d = seoDesc.value || summary.value || 'Short summary of the machine…';
+      form!.querySelector('[data-serp-title]')!.textContent = t.length > 65 ? `${t.slice(0, 64)}…` : t;
+      form!.querySelector('[data-serp-desc]')!.textContent = d.length > 160 ? `${d.slice(0, 159)}…` : d;
+      form!.querySelector('[data-serp-slug]')!.textContent = slug.value || 'your-machine';
+      for (const counter of form!.querySelectorAll<HTMLElement>('[data-counter-for]')) {
+        const input = form!.querySelector<HTMLInputElement>(`#${counter.dataset['counterFor']}`)!;
+        const max = Number(counter.dataset['max']);
+        counter.textContent = `${input.value.length}/${max}`;
+        counter.classList.toggle('over', input.value.length > max);
+      }
+    }
+    [slug, summary, seoTitle, seoDesc, price].forEach((el) => el.addEventListener('input', updatePreview));
+    updatePreview();
+
+    // Photo previews.
+    const photos = $<HTMLInputElement>('[data-photos]')!;
+    const previews = $<HTMLUListElement>('[data-previews]')!;
+    photos.addEventListener('change', () => {
+      previews.replaceChildren(
+        ...[...(photos.files ?? [])].map((f) => {
+          const li = document.createElement('li');
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(f);
+          img.alt = '';
+          li.append(img);
+          return li;
+        }),
+      );
+    });
+
+    async function resize(file: File, maxSide: number, quality: number) {
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+      const w = Math.round(bitmap.width * scale);
+      const h = Math.round(bitmap.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d')!.drawImage(bitmap, 0, 0, w, h);
+      bitmap.close();
+      const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/webp', quality));
+      if (!blob || blob.type !== 'image/webp') throw new Error('WebP not supported');
+      return { file: new File([blob], file.name.replace(/\.\w+$/, '.webp'), { type: 'image/webp' }), w, h };
+    }
+
+    const status = $<HTMLElement>('[data-save-status]')!;
+    const save = $<HTMLButtonElement>('[data-save]')!;
+
+    let prepared = false;
+    form.addEventListener('submit', async (event) => {
+      const files = [...(photos.files ?? [])];
+      if (prepared || files.length === 0 || !('createImageBitmap' in window) || !('DataTransfer' in window)) return;
+
+      // Resize in the browser, put the results into hidden file inputs, then submit normally.
+      event.preventDefault();
+      save.disabled = true;
+      try {
+        const large = new DataTransfer();
+        const thumbs = new DataTransfer();
+        const sizes: [number, number][] = [];
+        for (const [i, f] of files.entries()) {
+          status.textContent = `Preparing photo ${i + 1} of ${files.length}…`;
+          const big = await resize(f, 1600, 0.82);
+          const small = await resize(f, 640, 0.78);
+          large.items.add(big.file);
+          thumbs.items.add(small.file);
+          sizes.push([big.w, big.h]);
+        }
+        const hiddenFile = (name: string, list: FileList) => {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.name = name;
+          input.multiple = true;
+          input.hidden = true;
+          input.files = list;
+          form.append(input);
+        };
+        const hidden = (name: string, value: string) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          input.value = value;
+          form.append(input);
+        };
+        hiddenFile('upload_large', large.files);
+        hiddenFile('upload_thumb', thumbs.files);
+        sizes.forEach(([w, h]) => {
+          hidden('upload_w', String(w));
+          hidden('upload_h', String(h));
+        });
+        photos.value = ''; // originals no longer needed
+      } catch {
+        // Resizing failed (e.g. no WebP support) — upload the originals instead.
+      }
+      status.textContent = 'Uploading…';
+      prepared = true;
+      form.requestSubmit();
+    });
+  }
+</script>
+
+<style>
+  .mform {
+    display: grid;
+    gap: 1.5rem;
+    align-items: start;
+  }
+  @media (min-width: 1000px) {
+    .mform {
+      grid-template-columns: minmax(0, 1fr) 19rem;
+    }
+  }
+  .mform__main {
+    display: grid;
+    gap: 1.5rem;
+  }
+  .panel {
+    border: 1px solid var(--border);
+    gap: 1.1rem;
+    min-width: 0;
+  }
+  .panel > legend {
+    float: left;
+    width: 100%;
+    font-size: var(--fs-lg);
+    font-weight: 800;
+    margin-bottom: 0.25rem;
+  }
+  fieldset.field {
+    border: 0;
+    padding: 0;
+    min-width: 0;
+  }
+  .two {
+    display: grid;
+    gap: 1.1rem 1rem;
+  }
+  @media (min-width: 640px) {
+    .two {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .radios {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .radios label,
+  .status-opts label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.5rem 0.9rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 500;
+  }
+  .radios label:has(input:checked),
+  .status-opts label:has(input:checked) {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  input[type='radio'],
+  input[type='checkbox'] {
+    accent-color: var(--accent);
+    width: 1.1rem;
+    height: 1.1rem;
+    flex: none;
+  }
+  .status-opts {
+    display: grid;
+    gap: 0.4rem;
+  }
+  .status-opts small {
+    display: block;
+    color: var(--text-3);
+    font-size: var(--fs-xs);
+  }
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 600;
+    min-height: 44px;
+  }
+  .sticky {
+    position: sticky;
+    top: 5rem;
+  }
+  .photos {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+  .photo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    align-items: center;
+    padding: 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+  }
+  .photo img {
+    width: 120px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+  .photo__fields {
+    flex: 1 1 14rem;
+    display: grid;
+    gap: 0.5rem;
+  }
+  .photo__opts {
+    display: flex;
+    gap: 1.25rem;
+    font-size: var(--fs-sm);
+  }
+  .photo__opts label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 32px;
+    cursor: pointer;
+  }
+  .photo__remove {
+    color: var(--danger);
+  }
+  .file {
+    padding: 0.75rem;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    width: 100%;
+  }
+  .previews {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .previews :global(img) {
+    width: 96px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+  .slug {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    overflow: hidden;
+  }
+  .slug span {
+    padding-left: 0.9rem;
+    color: var(--text-3);
+    font-size: var(--fs-sm);
+    white-space: nowrap;
+  }
+  .slug .input {
+    border: 0;
+    padding-left: 0.1rem;
+  }
+  .counter {
+    float: right;
+    font-weight: 500;
+    color: var(--text-3);
+    font-size: var(--fs-xs);
+  }
+  .counter.over {
+    color: var(--warning);
+  }
+  .serp {
+    padding: 1rem 1.1rem;
+    border-radius: var(--radius-sm);
+    background: #fff;
+    font-family: Arial, sans-serif;
+  }
+  .serp__url {
+    color: #202124;
+    font-size: 0.85rem;
+  }
+  .serp__title {
+    color: #1a0dab;
+    font-size: 1.15rem;
+    line-height: 1.3;
+    margin: 0.2rem 0;
+  }
+  .serp__desc {
+    color: #4d5156;
+    font-size: 0.875rem;
+  }
+</style>

@@ -1,0 +1,92 @@
+---
+import { env } from 'cloudflare:workers';
+
+import Icon from '@/components/ui/Icon.astro';
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import { getAdmin, signIn } from '@/lib/auth';
+
+export const prerender = false;
+
+const db = Astro.locals.supabase!;
+const nextParam = Astro.url.searchParams.get('next') ?? '';
+const next = nextParam.startsWith('/admin') && !nextParam.startsWith('//') ? nextParam : '/admin';
+
+if (Astro.request.method === 'GET' && (await getAdmin(db))) {
+  return Astro.redirect(next, 303);
+}
+
+let error = '';
+let email = '';
+
+if (Astro.request.method === 'POST') {
+  const ip = Astro.request.headers.get('cf-connecting-ip') ?? '';
+  const limiter = env.LOGIN_RATE_LIMITER;
+  const allowed = !limiter || !ip || (await limiter.limit({ key: `login:${ip}` })).success;
+  const form = await Astro.request.formData();
+  email = String(form.get('email') ?? '').trim().slice(0, 200);
+
+  if (!allowed) {
+    error = 'Too many attempts. Wait a minute and try again.';
+  } else {
+    const result = await signIn(db, email, String(form.get('password') ?? ''));
+    if (result.ok) return Astro.redirect(next, 303);
+    error = result.message;
+  }
+}
+---
+
+<AdminLayout title="Log in" bare>
+  <div class="login">
+    <div class="card login__card">
+      <span class="icon-tile"><Icon name="shield" size={24} /></span>
+      <h1>Admin login</h1>
+      <p class="muted">Manage machines for sale and manuals.</p>
+
+      <form method="post" class="login__form">
+        {
+          error && (
+            <p class="notice notice--error" role="alert">
+              {error}
+            </p>
+          )
+        }
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" class="input" autocomplete="username" required autofocus value={email} />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" class="input" autocomplete="current-password" required />
+        </div>
+        <button type="submit" class="btn btn--primary btn--lg btn--block">Log in</button>
+        <p class="hint">Forgotten your password? Reset it in the Supabase dashboard (Authentication → Users).</p>
+      </form>
+      <a href="/" class="login__back">← Back to website</a>
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+  .login {
+    min-height: 80dvh;
+    display: grid;
+    place-items: center;
+  }
+  .login__card {
+    width: min(100%, 26rem);
+    gap: 1rem;
+  }
+  h1 {
+    font-size: var(--fs-2xl);
+  }
+  .login__form {
+    display: grid;
+    gap: 1rem;
+  }
+  .login__back {
+    font-size: var(--fs-sm);
+  }
+  code {
+    font-family: var(--font-mono);
+  }
+</style>

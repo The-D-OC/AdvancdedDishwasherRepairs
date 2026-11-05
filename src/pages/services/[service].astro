@@ -1,0 +1,113 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+
+import ContactAside from '@/components/ui/ContactAside.astro';
+import CtaBanner from '@/components/ui/CtaBanner.astro';
+import Icon from '@/components/ui/Icon.astro';
+import PageHero from '@/components/ui/PageHero.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getBrands, getServices } from '@/lib/content';
+import { serviceSchema } from '@/lib/seo';
+
+export const getStaticPaths = (async () => {
+  const services = await getServices();
+  return services.map((service) => ({
+    params: { service: service.slug },
+    props: { service, others: services.filter((s) => s.slug !== service.slug) },
+  }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { service, others } = Astro.props as Props;
+const brands = await getBrands();
+const path = `/services/${service.slug}`;
+const crumbs = [
+  { label: 'Services', href: '/services' },
+  { label: service.title, href: path },
+];
+const description = service.seoDescription ?? service.description;
+---
+
+<BaseLayout
+  title={service.seoTitle ?? service.title}
+  description={description}
+  breadcrumbs={crumbs}
+  jsonLd={[serviceSchema(service.title, description, path)]}
+>
+  <PageHero eyebrow="Service" title={service.title} lead={service.description} breadcrumbs={crumbs} />
+
+  <section class="section">
+    <div class="container with-aside">
+      <div class="with-aside__main">
+        <div class="prose">
+          {service.content.map((p) => <p>{p}</p>)}
+        </div>
+
+        <h2 class="sub">Why choose us</h2>
+        <ul class="checklist">
+          <li><Icon name="check" size={18} /> Experienced engineers who know commercial machines inside out</li>
+          <li><Icon name="check" size={18} /> Vans stocked with common parts for first-time fixes</li>
+          <li><Icon name="check" size={18} /> Fixed quotes before work starts — no surprises</li>
+          <li><Icon name="check" size={18} /> 90-day parts and labour warranty on repairs</li>
+        </ul>
+
+        <h2 class="sub">Brands we work on</h2>
+        <ul class="chips">
+          {
+            brands.map((b) => (
+              <li>
+                <a href={`/brands/${b.slug}`} class="badge">
+                  {b.name}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+
+        <h2 class="sub">Other services</h2>
+        <div class="grid grid--3">
+          {
+            others.map((s) => (
+              <article class="card card--link">
+                <span class="icon-tile">
+                  <Icon name={s.icon} size={20} />
+                </span>
+                <h3>
+                  <a href={`/services/${s.slug}`} class="stretched">
+                    {s.title}
+                  </a>
+                </h3>
+              </article>
+            ))
+          }
+        </div>
+      </div>
+      <ContactAside />
+    </div>
+  </section>
+
+  <CtaBanner />
+</BaseLayout>
+
+<style>
+  .sub {
+    font-size: var(--fs-xl);
+    margin: 2.5rem 0 1rem;
+  }
+  .chips {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .chips a {
+    text-decoration: none;
+    font-size: var(--fs-sm);
+    padding: 0.45rem 0.85rem;
+  }
+  .chips a:hover {
+    border-color: var(--accent-line);
+    color: var(--accent);
+  }
+</style>

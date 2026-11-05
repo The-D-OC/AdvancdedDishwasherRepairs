@@ -1,0 +1,28 @@
+---
+/** Placeholder shown while the LiveMachines server island loads. */
+interface Props {
+  count?: number;
+}
+const { count = 3 } = Astro.props;
+---
+
+<div class="grid grid--3" aria-busy="true" aria-label="Loading machines for sale">
+  {Array.from({ length: count }, () => <div class="card skeleton" />)}
+</div>
+
+<style>
+  .skeleton {
+    min-height: 32rem;
+    background: linear-gradient(100deg, var(--surface) 30%, var(--surface-2) 50%, var(--surface) 70%);
+    background-size: 300% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: 0 0;
+    }
+  }
+</style>

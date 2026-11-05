@@ -1,0 +1,64 @@
+---
+import CtaBanner from '@/components/ui/CtaBanner.astro';
+import Icon from '@/components/ui/Icon.astro';
+import PageHero from '@/components/ui/PageHero.astro';
+import StatStrip from '@/components/ui/StatStrip.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getServices } from '@/lib/content';
+
+const services = await getServices();
+const crumbs = [{ label: 'Services', href: '/services' }];
+---
+
+<BaseLayout
+  title="Commercial Dishwasher Services"
+  description="Commercial dishwasher and glasswasher repairs, installation, planned maintenance and emergency call outs across the North West."
+  breadcrumbs={crumbs}
+>
+  <PageHero
+    eyebrow="Our services"
+    title="Everything your warewashing needs"
+    lead="From emergency repairs to planned maintenance, our engineers keep commercial dishwashers and glasswashers running."
+    breadcrumbs={crumbs}
+  />
+
+  <section class="section">
+    <div class="container">
+      <div class="grid grid--2">
+        {
+          services.map((s) => (
+            <article class="card card--link service">
+              <span class="icon-tile">
+                <Icon name={s.icon} size={24} />
+              </span>
+              <h2>
+                <a href={`/services/${s.slug}`} class="stretched">
+                  {s.title}
+                </a>
+              </h2>
+              <p>{s.description}</p>
+              <span class="card-more" aria-hidden="true">
+                Find out more <Icon name="arrowRight" size={16} />
+              </span>
+            </article>
+          ))
+        }
+      </div>
+      <div class="stats-wrap"><StatStrip /></div>
+    </div>
+  </section>
+
+  <CtaBanner />
+</BaseLayout>
+
+<style>
+  .service h2 {
+    font-size: var(--fs-xl);
+  }
+  .service p {
+    font-size: var(--fs-md) !important;
+  }
+  .stats-wrap {
+    margin-top: 2.5rem;
+  }
+</style>

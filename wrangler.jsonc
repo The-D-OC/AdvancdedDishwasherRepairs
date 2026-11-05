@@ -1,0 +1,36 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "advanced-dishwasher-repairs",
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+
+  // Non-secret configuration. Secrets (RESEND_API_KEY, TURNSTILE_SECRET_KEY)
+  // are set with `npx wrangler secret put <NAME>` — never commit them here.
+  "vars": {
+    // Where enquiry, booking and for-sale form submissions are emailed.
+    "ENQUIRY_TO_EMAIL": "info@advanceddishwasherrepairs.co.uk",
+    // Sender address — must be on a domain verified in Resend.
+    "ENQUIRY_FROM_EMAIL": "Website <website@advanceddishwasherrepairs.co.uk>",
+    // Supabase (machines for sale + admin logins). The publishable key is safe
+    // to expose: access is enforced by row level security in the database.
+    "SUPABASE_URL": "https://hxziesvqdjweaydxlwmd.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_FYEyQT6rW-DVWyCeGux1tQ_ePeTxDwF"
+  },
+
+  "ratelimits": [
+    // Per-IP limit on enquiry form submissions: 5 per 60 seconds.
+    {
+      "name": "FORM_RATE_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 5, "period": 60 }
+    },
+    // Per-IP limit on admin login attempts: 5 per 60 seconds.
+    {
+      "name": "LOGIN_RATE_LIMITER",
+      "namespace_id": "1002",
+      "simple": { "limit": 5, "period": 60 }
+    }
+  ]
+}

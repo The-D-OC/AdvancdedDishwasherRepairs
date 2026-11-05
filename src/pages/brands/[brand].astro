@@ -1,0 +1,112 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+
+import ContactAside from '@/components/ui/ContactAside.astro';
+import CtaBanner from '@/components/ui/CtaBanner.astro';
+import Icon from '@/components/ui/Icon.astro';
+import PageHero from '@/components/ui/PageHero.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import LiveMachines from '@/components/sale/LiveMachines.astro';
+import LiveManuals from '@/components/manuals/LiveManuals.astro';
+import { getBrands, getFaultCodes } from '@/lib/content';
+import { serviceSchema } from '@/lib/seo';
+
+export const getStaticPaths = (async () => {
+  const brands = await getBrands();
+  return brands.map((brand) => ({ params: { brand: brand.slug }, props: { brand } }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { brand } = Astro.props as Props;
+
+const same = (name: string) => name.toLowerCase() === brand.name.toLowerCase();
+const faultCodes = await getFaultCodes();
+const brandCodes = faultCodes.filter((f) => same(f.brand));
+
+const path = `/brands/${brand.slug}`;
+const crumbs = [
+  { label: 'Brands', href: '/brands' },
+  { label: brand.name, href: path },
+];
+const description =
+  brand.seoDescription ?? `${brand.name} commercial dishwasher and glasswasher repair, servicing, fault codes and manuals.`;
+---
+
+<BaseLayout
+  title={brand.seoTitle ?? `${brand.name} Commercial Dishwasher Repair`}
+  description={description}
+  breadcrumbs={crumbs}
+  jsonLd={[serviceSchema(`${brand.name} dishwasher repair`, description, path)]}
+>
+  <PageHero eyebrow="Brand" title={`${brand.name} dishwasher repair`} lead={brand.description} breadcrumbs={crumbs} />
+
+  <section class="section">
+    <div class="container with-aside">
+      <div class="stack">
+        <div class="prose">
+          <p>
+            Our engineers repair, service and install {brand.name} commercial dishwashers and glasswashers across the North
+            West — from undercounter machines to pass-through and rack conveyor models.
+          </p>
+          <p>
+            We carry common {brand.name} spare parts on our vans, so most faults are diagnosed and fixed on the first
+            visit.
+          </p>
+        </div>
+
+        <section aria-labelledby="codes-title">
+          <h2 id="codes-title" class="sub">{brand.name} fault codes</h2>
+          {
+            brandCodes.length > 0 ? (
+              <ul class="link-list">
+                {brandCodes.map((f) => (
+                  <li>
+                    <a href={`/fault-codes/${f.slug}`}>
+                      <span class="code">{f.code}</span>
+                      <span>
+                        {f.model} — {f.title}
+                      </span>
+                      <Icon name="arrowRight" size={16} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class="muted">
+                No {brand.name} codes in our library yet. <a href="/contact">Ask an engineer</a>.
+              </p>
+            )
+          }
+        </section>
+
+        <section aria-labelledby="manuals-title">
+          <h2 id="manuals-title" class="sub">{brand.name} manuals</h2>
+          <!-- Live from Supabase. -->
+          <LiveManuals
+            server:defer
+            brand={brand.name}
+            limit={20}
+            emptyText={`No ${brand.name} manuals uploaded yet — contact us and we’ll check our library.`}
+          />
+        </section>
+
+        <!-- Live from the database; renders nothing if this brand has no stock. -->
+        <LiveMachines server:defer brand={brand.name} limit={6} variant="links" heading={`${brand.name} machines for sale`} />
+      </div>
+      <ContactAside title={`${brand.name} machine down?`} />
+    </div>
+  </section>
+
+  <CtaBanner />
+</BaseLayout>
+
+<style>
+  .stack {
+    display: grid;
+    gap: 2.5rem;
+  }
+  .sub {
+    font-size: var(--fs-xl);
+    margin-bottom: 1rem;
+  }
+</style>

@@ -1,0 +1,94 @@
+---
+import SearchBar from '@/components/search/SearchBar.astro';
+import CtaBanner from '@/components/ui/CtaBanner.astro';
+import Icon from '@/components/ui/Icon.astro';
+import PageHero from '@/components/ui/PageHero.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { listPublicManuals } from '@/lib/manuals';
+import { itemListSchema } from '@/lib/seo';
+import { publicClient } from '@/lib/supabase';
+
+// Rendered on each request so manuals added in /admin appear immediately.
+export const prerender = false;
+
+const manuals = await listPublicManuals(publicClient());
+Astro.response.headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+const brands = [...new Set(manuals.map((m) => m.brand))].sort();
+const crumbs = [{ label: 'Manuals', href: '/manuals' }];
+---
+
+<BaseLayout
+  title="Commercial Dishwasher Manuals"
+  description="Search commercial dishwasher and glasswasher user, installation and service manuals by brand, model or product type."
+  breadcrumbs={crumbs}
+  jsonLd={[itemListSchema('Commercial dishwasher manuals', manuals.map((m) => ({ name: m.title, path: `/manuals/${m.slug}` })))]}
+>
+  <PageHero
+    eyebrow="Manual library"
+    title="Dishwasher & glasswasher manuals"
+    lead="Find user, installation and service manuals by brand, model or machine type."
+    breadcrumbs={crumbs}
+  />
+
+  <section class="section">
+    <div class="container" data-filter-root data-filter-noun="manual">
+      <div class="search-row">
+        <SearchBar action="/manuals" label="Search manuals" placeholder="Brand, model or type — e.g. Hobart AM15" brands={brands} idPrefix="manuals" size="lg" />
+        <p class="count" aria-live="polite" data-filter-count>{manuals.length} manuals</p>
+      </div>
+
+      <ul class="link-list">
+        {
+          manuals.map((m) => (
+            <li data-filter-item data-facet={m.brand} data-search={`${m.title} ${m.brand} ${m.model} ${m.productType}`}>
+              <a href={`/manuals/${m.slug}`}>
+                <span class="code">
+                  <Icon name="file" size={18} />
+                </span>
+                <span>
+                  <strong>{m.title}</strong>
+                  <small>
+                    {[m.brand, m.model, m.productType, m.pdfUrl ? 'PDF' : ''].filter(Boolean).join(' · ')}
+                  </small>
+                </span>
+                <Icon name="arrowRight" size={16} />
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+
+      <div class="card empty" data-filter-empty hidden={manuals.length > 0}>
+        <h2>Manual not listed?</h2>
+        <p>We hold many more manuals than we’ve uploaded. Tell us the make and model and we’ll check.</p>
+        <a href="/contact" class="btn btn--primary">Request a manual</a>
+      </div>
+    </div>
+  </section>
+
+  <CtaBanner />
+</BaseLayout>
+
+<script>
+  import { initFilters } from '@/components/search/filter';
+  initFilters();
+</script>
+
+<style>
+  .search-row {
+    display: grid;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .count {
+    color: var(--text-2);
+    font-size: var(--fs-sm);
+  }
+  .empty {
+    margin-top: 1rem;
+    align-items: flex-start;
+  }
+  .empty h2 {
+    font-size: var(--fs-xl);
+  }
+</style>

@@ -1,0 +1,71 @@
+---
+import Icon, { type IconName } from '@/components/ui/Icon.astro';
+import { SITE } from '@/config/site';
+
+const icons: IconName[] = ['award', 'wrench', 'shield', 'gauge'];
+---
+
+<ul class="stats">
+  {
+    SITE.stats.map((s, i) => (
+      <li>
+        <span class="stats__icon">
+          <Icon name={icons[i] ?? 'check'} size={22} />
+        </span>
+        <span class="stats__text">
+          <strong>{s.value}</strong>
+          <span>{s.label}</span>
+        </span>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .stats {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  @media (min-width: 860px) {
+    .stats {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: clamp(1rem, 0.75rem + 1vw, 1.5rem);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .stats__icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    border: 1px solid var(--accent-line);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .stats__text {
+    display: grid;
+  }
+  strong {
+    font-size: var(--fs-xl);
+    font-weight: 800;
+    line-height: 1.1;
+  }
+  .stats__text span {
+    font-size: var(--fs-xs);
+    color: var(--text-2);
+  }
+</style>

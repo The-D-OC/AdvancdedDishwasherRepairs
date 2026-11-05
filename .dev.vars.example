@@ -1,0 +1,4 @@
+# Local secrets for `npm run dev` / `npm run preview`.
+# Copy to .dev.vars (git-ignored) and fill in. In production, use `npx wrangler secret put <NAME>`.
+RESEND_API_KEY=
+TURNSTILE_SECRET_KEY=

@@ -41,3 +41,12 @@ example
 # generated native folders
 /ios
 /android
+
+# Cloudflare
+.wrangler/
+.dev.vars*
+!.dev.vars.example
+worker-configuration.d.ts
+
+# Astro
+.astro/

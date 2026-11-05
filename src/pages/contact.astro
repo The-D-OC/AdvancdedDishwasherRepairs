@@ -1,0 +1,151 @@
+---
+import EnquiryForm from '@/components/forms/EnquiryForm.astro';
+import Icon from '@/components/ui/Icon.astro';
+import PageHero from '@/components/ui/PageHero.astro';
+import { SITE, mailtoHref, telHref } from '@/config/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const crumbs = [{ label: 'Contact', href: '/contact' }];
+---
+
+<BaseLayout
+  title="Contact Us"
+  description={`Contact ${SITE.name} for commercial dishwasher repairs, quotes and machine sales. Call ${SITE.phone.display}.`}
+  breadcrumbs={crumbs}
+  jsonLd={[{ '@context': 'https://schema.org', '@type': 'ContactPage', name: 'Contact us', url: `${SITE.url}/contact` }]}
+>
+  <PageHero
+    eyebrow="Get in touch"
+    title="Contact us"
+    lead="Quotes, repairs, maintenance contracts or machine sales — we’re here to help."
+    breadcrumbs={crumbs}
+  />
+
+  <section class="section">
+    <div class="container contact">
+      <div class="contact__info">
+        <a href={telHref} class="method method--primary">
+          <span class="icon-tile"><Icon name="phone" size={24} /></span>
+          <span>
+            <small>Call us</small>
+            <strong>{SITE.phone.display}</strong>
+          </span>
+        </a>
+        <a href={mailtoHref()} class="method">
+          <span class="icon-tile"><Icon name="mail" size={24} /></span>
+          <span>
+            <small>Email</small>
+            <strong class="break">{SITE.email}</strong>
+          </span>
+        </a>
+        <div class="method">
+          <span class="icon-tile"><Icon name="mapPin" size={24} /></span>
+          <span>
+            <small>Based in</small>
+            <strong>{SITE.address.locality}, {SITE.address.region}</strong>
+          </span>
+        </div>
+        <div class="hours card">
+          <h2><Icon name="clock" size={20} /> Opening hours</h2>
+          <dl>
+            {
+              SITE.hours.map((h) => (
+                <div>
+                  <dt>{h.days}</dt>
+                  <dd>{h.time}</dd>
+                </div>
+              ))
+            }
+          </dl>
+        </div>
+      </div>
+
+      <div class="card contact__form">
+        <h2>Send us a message</h2>
+        <p class="muted">We aim to reply within a couple of hours during opening times.</p>
+        <EnquiryForm type="contact" />
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .contact {
+    display: grid;
+    gap: 2.5rem;
+    align-items: start;
+  }
+  @media (min-width: 980px) {
+    .contact {
+      grid-template-columns: 0.8fr 1.2fr;
+    }
+  }
+  .contact__info {
+    display: grid;
+    gap: 0.85rem;
+  }
+  .method {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem 1.2rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    text-decoration: none;
+  }
+  a.method:hover {
+    border-color: var(--accent-line);
+    color: var(--text);
+  }
+  .method--primary {
+    border-color: var(--accent-line);
+    background: linear-gradient(135deg, rgb(34 184 240 / 0.12), transparent), var(--surface);
+  }
+  .method small {
+    display: block;
+    color: var(--text-2);
+    font-size: var(--fs-sm);
+  }
+  .method strong {
+    font-size: var(--fs-lg);
+  }
+  .method--primary strong {
+    font-size: var(--fs-xl);
+  }
+  .break {
+    overflow-wrap: anywhere;
+  }
+  .hours h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--fs-lg);
+  }
+  .hours :global(svg) {
+    color: var(--accent);
+  }
+  .hours dl {
+    display: grid;
+    gap: 0.5rem;
+  }
+  .hours dl div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: var(--fs-sm);
+  }
+  .hours dt {
+    font-weight: 600;
+  }
+  .hours dd {
+    color: var(--text-2);
+  }
+  .contact__form h2 {
+    font-size: var(--fs-xl);
+  }
+  .contact__form > p {
+    margin-bottom: 0.75rem;
+  }
+</style>

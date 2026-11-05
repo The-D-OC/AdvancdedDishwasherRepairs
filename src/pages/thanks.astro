@@ -1,0 +1,42 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import { SITE, telHref } from '@/config/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Thank You" description="Thanks for getting in touch — we’ll be in touch shortly." noindex>
+  <section class="section">
+    <div class="container thanks">
+      <span class="thanks__icon"><Icon name="checkCircle" size={56} /></span>
+      <h1>Thanks — message received</h1>
+      <p class="lead">We’ll get back to you shortly. For anything urgent, call us on <a href={telHref}>{SITE.phone.display}</a>.</p>
+      <div class="thanks__actions">
+        <a href="/" class="btn btn--primary">Back to home</a>
+        <a href="/for-sale" class="btn btn--ghost">Browse machines for sale</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .thanks {
+    display: grid;
+    justify-items: center;
+    text-align: center;
+    gap: 1rem;
+    padding-block: 2rem;
+  }
+  .thanks__icon {
+    color: var(--success);
+  }
+  h1 {
+    font-size: var(--fs-2xl);
+  }
+  .thanks__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+</style>

@@ -1,0 +1,399 @@
+---
+/**
+ * Shared enquiry form for contact, booking and for-sale enquiries.
+ * Works without JavaScript (standard POST + redirect); with JavaScript it
+ * submits in place and shows field-level errors from the server.
+ */
+import Icon from '@/components/ui/Icon.astro';
+import { SITE, telHref } from '@/config/site';
+import { HONEYPOT_FIELD, type FormType } from '@/lib/forms';
+
+interface Props {
+  type: FormType;
+  /** Pre-selected machine (for-sale enquiries). */
+  machineRef?: string | undefined;
+  /** Options for the machine dropdown on the general for-sale form. */
+  machineOptions?: string[] | undefined;
+  submitLabel?: string | undefined;
+  compact?: boolean;
+}
+
+const { type, machineRef, machineOptions = [], submitLabel, compact = false } = Astro.props;
+const id = `f-${type}`;
+const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+const label =
+  submitLabel ?? (type === 'booking' ? 'Request booking' : type === 'machine' ? 'Send enquiry' : 'Send message');
+---
+
+<form
+  id="enquiry-form"
+  class:list={['enquiry', { 'enquiry--compact': compact }]}
+  method="post"
+  action="/api/enquiry"
+  novalidate
+  data-enquiry-form
+>
+  <input type="hidden" name="formType" value={type} />
+  <input type="hidden" name="_started" value="" data-started />
+
+  <!-- Honeypot: hidden from people and screen readers. -->
+  <div class="hp" aria-hidden="true">
+    <label for={`${id}-hp`}>Leave this field empty</label>
+    <input id={`${id}-hp`} type="text" name={HONEYPOT_FIELD} tabindex="-1" autocomplete="off" />
+  </div>
+
+  <div class="enquiry__status" role="alert" aria-live="assertive" data-status hidden></div>
+
+  {
+    type === 'machine' &&
+      (machineRef ? (
+        <input type="hidden" name="machineRef" value={machineRef} />
+      ) : (
+        <div class="field field--full">
+          <label for={`${id}-machineRef`}>
+            Which machine? <span class="req">*</span>
+          </label>
+          <select id={`${id}-machineRef`} name="machineRef" class="select" required aria-describedby={`${id}-machineRef-err`}>
+            <option value="">Choose a machine…</option>
+            {machineOptions.map((m) => (
+              <option value={m}>{m}</option>
+            ))}
+            <option value="Not listed — looking for a machine">Something else / not listed</option>
+          </select>
+          <p class="field-error" id={`${id}-machineRef-err`} data-error-for="machineRef" />
+        </div>
+      ))
+  }
+
+  <div class="field">
+    <label for={`${id}-name`}>Name <span class="req">*</span></label>
+    <input id={`${id}-name`} name="name" class="input" autocomplete="name" required maxlength="100" aria-describedby={`${id}-name-err`} />
+    <p class="field-error" id={`${id}-name-err`} data-error-for="name"></p>
+  </div>
+
+  <div class="field">
+    <label for={`${id}-company`}>Business name</label>
+    <input id={`${id}-company`} name="company" class="input" autocomplete="organization" maxlength="150" />
+  </div>
+
+  <div class="field">
+    <label for={`${id}-phone`}>Phone {type === 'booking' && <span class="req">*</span>}</label>
+    <input
+      id={`${id}-phone`}
+      name="phone"
+      type="tel"
+      class="input"
+      autocomplete="tel"
+      inputmode="tel"
+      maxlength="30"
+      required={type === 'booking'}
+      aria-describedby={`${id}-phone-err`}
+    />
+    <p class="field-error" id={`${id}-phone-err`} data-error-for="phone"></p>
+  </div>
+
+  <div class="field">
+    <label for={`${id}-email`}>Email {type === 'contact' && <span class="req">*</span>}</label>
+    <input
+      id={`${id}-email`}
+      name="email"
+      type="email"
+      class="input"
+      autocomplete="email"
+      maxlength="200"
+      required={type === 'contact'}
+      aria-describedby={`${id}-email-err ${id}-email-hint`}
+    />
+    {type !== 'contact' && <p class="hint" id={`${id}-email-hint`}>Phone or email — whichever suits you.</p>}
+    <p class="field-error" id={`${id}-email-err`} data-error-for="email"></p>
+  </div>
+
+  {
+    type === 'booking' && (
+      <>
+        <div class="field">
+          <label for={`${id}-machine`}>Machine make &amp; model</label>
+          <input id={`${id}-machine`} name="machine" class="input" maxlength="150" placeholder="e.g. Hobart AM15" />
+        </div>
+        <div class="field">
+          <label for={`${id}-urgency`}>How urgent?</label>
+          <select id={`${id}-urgency`} name="urgency" class="select">
+            <option>Emergency — machine down</option>
+            <option selected>As soon as possible</option>
+            <option>Within the week</option>
+            <option>Routine service</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for={`${id}-postcode`}>
+            Site postcode <span class="req">*</span>
+          </label>
+          <input
+            id={`${id}-postcode`}
+            name="postcode"
+            class="input"
+            autocomplete="postal-code"
+            maxlength="10"
+            required
+            aria-describedby={`${id}-postcode-err`}
+          />
+          <p class="field-error" id={`${id}-postcode-err`} data-error-for="postcode" />
+        </div>
+        <div class="field">
+          <label for={`${id}-address`}>Site address</label>
+          <input id={`${id}-address`} name="address" class="input" autocomplete="street-address" maxlength="300" />
+        </div>
+      </>
+    )
+  }
+
+  {
+    type === 'machine' && (
+      <>
+        <div class="field">
+          <label for={`${id}-postcode`}>Delivery postcode</label>
+          <input
+            id={`${id}-postcode`}
+            name="postcode"
+            class="input"
+            autocomplete="postal-code"
+            maxlength="10"
+            aria-describedby={`${id}-postcode-err`}
+          />
+          <p class="field-error" id={`${id}-postcode-err`} data-error-for="postcode" />
+        </div>
+        <fieldset class="field">
+          <legend>Need it installed?</legend>
+          <div class="radios">
+            <label>
+              <input type="radio" name="installation" value="Yes" /> Yes
+            </label>
+            <label>
+              <input type="radio" name="installation" value="No" /> No
+            </label>
+            <label>
+              <input type="radio" name="installation" value="Not sure" checked /> Not sure
+            </label>
+          </div>
+        </fieldset>
+      </>
+    )
+  }
+
+  <div class="field field--full">
+    <label for={`${id}-message`}>
+      {type === 'booking' ? 'Describe the fault' : type === 'machine' ? 'Questions or notes' : 'How can we help?'}
+      {type !== 'machine' && <span class="req">*</span>}
+    </label>
+    <textarea
+      id={`${id}-message`}
+      name="message"
+      class="textarea"
+      maxlength="3000"
+      rows={compact ? 3 : 5}
+      required={type !== 'machine'}
+      placeholder={type === 'booking' ? 'Error codes, what the machine is doing, when it started…' : ''}
+      aria-describedby={`${id}-message-err`}></textarea>
+    <p class="field-error" id={`${id}-message-err`} data-error-for="message"></p>
+  </div>
+
+  {
+    turnstileKey && (
+      <div class="field--full">
+        <div class="cf-turnstile" data-sitekey={turnstileKey} data-theme="dark" />
+        <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
+      </div>
+    )
+  }
+
+  <div class="enquiry__footer field--full">
+    <button type="submit" class="btn btn--primary btn--lg" data-submit>
+      <span data-submit-label>{label}</span>
+      <Icon name="arrowRight" size={20} />
+    </button>
+    <p class="enquiry__alt">
+      Prefer to talk? Call <a href={telHref}>{SITE.phone.display}</a>
+    </p>
+  </div>
+</form>
+
+<div class="enquiry-success" data-success hidden tabindex="-1">
+  <span class="enquiry-success__icon"><Icon name="checkCircle" size={36} /></span>
+  <h3>Thanks — message received</h3>
+  <p>We’ll get back to you shortly. For anything urgent, call <a href={telHref}>{SITE.phone.display}</a>.</p>
+</div>
+
+<script>
+  type ApiResult = { ok: boolean; message: string; errors?: Record<string, string> };
+
+  for (const form of document.querySelectorAll<HTMLFormElement>('[data-enquiry-form]')) {
+    const started = form.querySelector<HTMLInputElement>('[data-started]');
+    if (started) started.value = String(Date.now());
+
+    const status = form.querySelector<HTMLElement>('[data-status]');
+    const submit = form.querySelector<HTMLButtonElement>('[data-submit]');
+    const submitLabel = form.querySelector<HTMLElement>('[data-submit-label]');
+    const success = form.nextElementSibling as HTMLElement | null;
+
+    const showStatus = (message: string) => {
+      if (!status) return;
+      status.textContent = message;
+      status.hidden = false;
+    };
+
+    // Error passed back by the no-JS fallback redirect.
+    const fallbackError = new URLSearchParams(location.search).get('error');
+    if (fallbackError) showStatus(fallbackError);
+
+    const clearErrors = () => {
+      form.querySelectorAll<HTMLElement>('[data-error-for]').forEach((el) => (el.textContent = ''));
+      form.querySelectorAll('[aria-invalid]').forEach((el) => el.removeAttribute('aria-invalid'));
+      if (status) status.hidden = true;
+    };
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      clearErrors();
+      const original = submitLabel?.textContent ?? '';
+      if (submit) submit.disabled = true;
+      if (submitLabel) submitLabel.textContent = 'Sending…';
+
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { Accept: 'application/json' },
+        });
+        const result = (await res.json()) as ApiResult;
+
+        if (result.ok) {
+          form.hidden = true;
+          if (success) {
+            success.hidden = false;
+            success.focus();
+          }
+          return;
+        }
+
+        showStatus(result.message);
+        let first: HTMLElement | null = null;
+        for (const [name, message] of Object.entries(result.errors ?? {})) {
+          const errorEl = form.querySelector<HTMLElement>(`[data-error-for="${name}"]`);
+          if (errorEl) errorEl.textContent = message;
+          const input = form.querySelector<HTMLElement>(`[name="${name}"]`);
+          input?.setAttribute('aria-invalid', 'true');
+          first ??= input;
+        }
+        (first ?? status)?.focus();
+      } catch {
+        showStatus('Something went wrong sending your message. Please call us instead.');
+      } finally {
+        if (submit) submit.disabled = false;
+        if (submitLabel) submitLabel.textContent = original;
+        // Reset Turnstile so a fresh token is issued for a retry.
+        (window as unknown as { turnstile?: { reset: () => void } }).turnstile?.reset();
+      }
+    });
+  }
+</script>
+
+<style>
+  .enquiry {
+    display: grid;
+    gap: 1.1rem 1rem;
+    grid-template-columns: 1fr;
+  }
+  .enquiry[hidden] {
+    display: none;
+  }
+  @media (min-width: 640px) {
+    .enquiry:not(.enquiry--compact) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .field--full {
+    grid-column: 1 / -1;
+  }
+  fieldset {
+    border: 0;
+    padding: 0;
+    min-width: 0;
+  }
+  .radios {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .radios label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.5rem 0.9rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .radios label:has(input:checked) {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .radios input {
+    accent-color: var(--accent);
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+  .hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+  .enquiry__status {
+    grid-column: 1 / -1;
+    padding: 0.9rem 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgb(248 113 113 / 0.4);
+    background: rgb(248 113 113 / 0.1);
+    color: #fecaca;
+    font-weight: 600;
+    font-size: var(--fs-sm);
+  }
+  .enquiry__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 1.5rem;
+    margin-top: 0.25rem;
+  }
+  .enquiry--compact .btn {
+    width: 100%;
+  }
+  .enquiry__alt {
+    color: var(--text-2);
+    font-size: var(--fs-sm);
+  }
+  .enquiry__alt a {
+    font-weight: 700;
+  }
+  .enquiry-success {
+    display: grid;
+    justify-items: start;
+    gap: 0.6rem;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    border: 1px solid rgb(52 211 153 / 0.35);
+    background: rgb(52 211 153 / 0.08);
+  }
+  .enquiry-success[hidden] {
+    display: none;
+  }
+  .enquiry-success__icon {
+    color: var(--success);
+  }
+  .enquiry-success p {
+    color: var(--text-2);
+  }
+</style>

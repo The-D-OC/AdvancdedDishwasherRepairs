@@ -1,0 +1,43 @@
+---
+import '@/styles/global.css';
+
+import Footer from '@/components/layout/Footer.astro';
+import Header from '@/components/layout/Header.astro';
+import MobileCallBar from '@/components/layout/MobileCallBar.astro';
+import Seo, { type SeoProps } from '@/components/seo/Seo.astro';
+import { breadcrumbSchema, localBusinessSchema, type Crumb } from '@/lib/seo';
+
+type Props = SeoProps & {
+  /** Breadcrumb trail (excluding Home). Emits BreadcrumbList schema. */
+  breadcrumbs?: Crumb[];
+};
+
+const { breadcrumbs = [], jsonLd = [], ...seo } = Astro.props;
+const trail: Crumb[] = [{ label: 'Home', href: '/' }, ...breadcrumbs];
+const schemas = [localBusinessSchema(), breadcrumbSchema(trail), ...jsonLd];
+---
+
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#060a13" />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="48x48" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <Seo {...seo} jsonLd={schemas} />
+    <slot name="head" />
+  </head>
+  <body>
+    <a href="#main" class="skip-link">Skip to content</a>
+    <Header />
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <Footer />
+    <MobileCallBar />
+  </body>
+</html>

@@ -1,0 +1,66 @@
+---
+import CtaBanner from '@/components/ui/CtaBanner.astro';
+import Icon from '@/components/ui/Icon.astro';
+import PageHero from '@/components/ui/PageHero.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getLocations } from '@/lib/content';
+
+const locations = await getLocations();
+const crumbs = [{ label: 'Coverage Areas', href: '/coverage-areas' }];
+---
+
+<BaseLayout
+  title="Areas We Cover — Commercial Dishwasher Repair"
+  description="Commercial dishwasher and glasswasher repairs across Greater Manchester, Merseyside, Lancashire, Cheshire and West Yorkshire."
+  breadcrumbs={crumbs}
+>
+  <PageHero
+    eyebrow="Coverage"
+    title="Areas we cover"
+    lead="Engineers based across the North West, with fast response times for repairs and emergency call outs."
+    breadcrumbs={crumbs}
+  />
+
+  <section class="section">
+    <div class="container">
+      <div class="grid grid--3">
+        {
+          locations.map((l) => (
+            <article class="card card--link">
+              <span class="icon-tile">
+                <Icon name="mapPin" size={22} />
+              </span>
+              <h2 class="loc-title">
+                <a href={`/coverage-areas/${l.slug}`} class="stretched">
+                  {l.name}
+                </a>
+              </h2>
+              <p>{l.coverageArea}</p>
+              {l.towns.length > 0 && <p class="towns">{l.towns.slice(0, 6).join(' · ')}</p>}
+              <span class="card-more" aria-hidden="true">
+                View area <Icon name="arrowRight" size={16} />
+              </span>
+            </article>
+          ))
+        }
+      </div>
+      <p class="note">Outside these areas? <a href="/contact">Get in touch</a> — we regularly travel further for maintenance contracts and installations.</p>
+    </div>
+  </section>
+
+  <CtaBanner />
+</BaseLayout>
+
+<style>
+  .loc-title {
+    font-size: var(--fs-xl);
+  }
+  .towns {
+    font-size: var(--fs-xs) !important;
+    color: var(--text-3) !important;
+  }
+  .note {
+    margin-top: 2rem;
+    color: var(--text-2);
+  }
+</style>

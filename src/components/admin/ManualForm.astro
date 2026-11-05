@@ -1,0 +1,291 @@
+---
+/** Add / edit form for a manual. Posts back to the current page. */
+import Icon from '@/components/ui/Icon.astro';
+import { SITE } from '@/config/site';
+import { formatBytes, type ManualInput } from '@/lib/manuals';
+
+interface Props {
+  values: ManualInput;
+  errors?: Record<string, string>;
+  mode: 'new' | 'edit';
+  /** Current PDF, when editing. */
+  pdf?: { url: string; size?: number | undefined } | undefined;
+}
+
+const { values: v, errors = {}, mode, pdf } = Astro.props;
+const err = (name: string) => errors[name];
+const host = new URL(SITE.url).host;
+const productTypes = ['Undercounter dishwasher', 'Glasswasher', 'Pass-through dishwasher', 'Rack conveyor', 'Water softener'];
+---
+
+<form method="post" enctype="multipart/form-data" class="mform" data-manual-form novalidate>
+  <div class="mform__main">
+    <fieldset class="card panel">
+      <legend>Manual details</legend>
+
+      <div class="field">
+        <label for="title">Title <span class="req">*</span></label>
+        <input id="title" name="title" class="input" required maxlength="200" value={v.title} placeholder="e.g. Hobart AM15 User Manual" aria-invalid={err('title') ? 'true' : undefined} aria-describedby={err('title') ? 'title-err' : undefined} data-title />
+        {err('title') && <p class="field-error" id="title-err">{err('title')}</p>}
+      </div>
+
+      <div class="three">
+        <div class="field">
+          <label for="brand">Brand <span class="req">*</span></label>
+          <input id="brand" name="brand" class="input" required maxlength="80" value={v.brand} list="brand-list" aria-invalid={err('brand') ? 'true' : undefined} aria-describedby={err('brand') ? 'brand-err' : undefined} />
+          <datalist id="brand-list">
+            {['Hobart', 'Winterhalter', 'Classeq', 'Maidaid', 'Meiko', 'Electrolux', 'Fagor', 'Comenda'].map((b) => <option value={b} />)}
+          </datalist>
+          {err('brand') && <p class="field-error" id="brand-err">{err('brand')}</p>}
+        </div>
+        <div class="field">
+          <label for="model">Model</label>
+          <input id="model" name="model" class="input" maxlength="80" value={v.model} />
+        </div>
+        <div class="field">
+          <label for="productType">Machine type</label>
+          <input id="productType" name="productType" class="input" maxlength="80" value={v.productType} list="type-list" />
+          <datalist id="type-list">{productTypes.map((t) => <option value={t} />)}</datalist>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" class="textarea" rows="3" maxlength="2000" aria-describedby="description-hint" data-summary>{v.description}</textarea>
+        <p class="hint" id="description-hint">A sentence or two about what the manual covers (user guide, installation, service, parts list…).</p>
+      </div>
+    </fieldset>
+
+    <fieldset class="card panel">
+      <legend>PDF</legend>
+      {
+        pdf ? (
+          <div class="current-pdf">
+            <Icon name="file" size={22} />
+            <a href={pdf.url} target="_blank" rel="noopener">
+              Current PDF{pdf.size ? ` (${formatBytes(pdf.size)})` : ''}
+            </a>
+            <label class="remove">
+              <input type="checkbox" name="removePdf" /> Remove
+            </label>
+          </div>
+        ) : (
+          <p class="hint">No PDF yet — the page will show a “Request this manual” button instead.</p>
+        )
+      }
+      <div class="field">
+        <label for="pdf">{pdf ? 'Replace with a new PDF' : 'Upload PDF'}</label>
+        <input id="pdf" name="pdf" type="file" accept="application/pdf,.pdf" class="file" aria-invalid={err('pdf') ? 'true' : undefined} aria-describedby="pdf-hint" />
+        <p class="hint" id="pdf-hint">PDF only, up to 25 MB.</p>
+        {err('pdf') && <p class="field-error">{err('pdf')}</p>}
+      </div>
+    </fieldset>
+
+    <fieldset class="card panel">
+      <legend>Search engines (SEO)</legend>
+      <p class="hint">Optional — sensible defaults are generated from the title and description.</p>
+      <div class="field">
+        <label for="slug">Page URL</label>
+        <div class="slug">
+          <span>{host}/manuals/</span>
+          <input id="slug" name="slug" class="input" maxlength="80" value={v.slug} aria-invalid={err('slug') ? 'true' : undefined} data-slug data-touched={mode === 'edit' ? 'true' : undefined} />
+        </div>
+        {err('slug') && <p class="field-error">{err('slug')}</p>}
+      </div>
+      <div class="field">
+        <label for="seoTitle">SEO title <span class="counter" data-counter-for="seoTitle" data-max="60"></span></label>
+        <input id="seoTitle" name="seoTitle" class="input" maxlength="70" value={v.seoTitle} placeholder="Defaults to the title" data-seo-title />
+      </div>
+      <div class="field">
+        <label for="seoDescription">SEO description <span class="counter" data-counter-for="seoDescription" data-max="155"></span></label>
+        <textarea id="seoDescription" name="seoDescription" class="textarea" rows="2" maxlength="170" placeholder="Defaults to the description" data-seo-desc>{v.seoDescription}</textarea>
+      </div>
+      <div class="serp" aria-label="Google search preview">
+        <p class="serp__url">{host} › manuals › <span data-serp-slug>{v.slug || 'your-manual'}</span></p>
+        <p class="serp__title" data-serp-title></p>
+        <p class="serp__desc" data-serp-desc></p>
+      </div>
+    </fieldset>
+  </div>
+
+  <aside class="mform__side">
+    <div class="card panel sticky">
+      <label class="check">
+        <input type="checkbox" name="published" checked={v.published} /> Published (visible on the website)
+      </label>
+      <button type="submit" class="btn btn--primary btn--lg btn--block" data-save>
+        {mode === 'new' ? 'Add manual' : 'Save changes'}
+      </button>
+      <p class="hint" data-save-status aria-live="polite"></p>
+    </div>
+  </aside>
+</form>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-manual-form]');
+  if (form) {
+    const q = <T extends Element>(s: string) => form.querySelector<T>(s)!;
+    const title = q<HTMLInputElement>('[data-title]');
+    const slug = q<HTMLInputElement>('[data-slug]');
+    const summary = q<HTMLTextAreaElement>('[data-summary]');
+    const seoTitle = q<HTMLInputElement>('[data-seo-title]');
+    const seoDesc = q<HTMLTextAreaElement>('[data-seo-desc]');
+    const slugify = (s: string) =>
+      s.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 80);
+
+    const update = () => {
+      const t = `${seoTitle.value || title.value || 'Manual title'} | Advanced Dishwasher Repairs`;
+      const d = seoDesc.value || summary.value || 'Description of the manual…';
+      q('[data-serp-title]').textContent = t.length > 65 ? `${t.slice(0, 64)}…` : t;
+      q('[data-serp-desc]').textContent = d.length > 160 ? `${d.slice(0, 159)}…` : d;
+      q('[data-serp-slug]').textContent = slug.value || 'your-manual';
+      form.querySelectorAll<HTMLElement>('[data-counter-for]').forEach((c) => {
+        const input = form.querySelector<HTMLInputElement>(`#${c.dataset['counterFor']}`)!;
+        c.textContent = `${input.value.length}/${c.dataset['max']}`;
+        c.classList.toggle('over', input.value.length > Number(c.dataset['max']));
+      });
+    };
+    slug.addEventListener('input', () => (slug.dataset['touched'] = 'true'));
+    title.addEventListener('input', () => {
+      if (!slug.dataset['touched']) slug.value = slugify(title.value);
+      update();
+    });
+    [slug, summary, seoTitle, seoDesc].forEach((el) => el.addEventListener('input', update));
+    update();
+
+    form.addEventListener('submit', () => {
+      const file = q<HTMLInputElement>('#pdf').files?.[0];
+      if (file) q('[data-save-status]').textContent = `Uploading ${file.name}…`;
+    });
+  }
+</script>
+
+<style>
+  .mform {
+    display: grid;
+    gap: 1.5rem;
+    align-items: start;
+  }
+  @media (min-width: 1000px) {
+    .mform {
+      grid-template-columns: minmax(0, 1fr) 19rem;
+    }
+  }
+  .mform__main {
+    display: grid;
+    gap: 1.5rem;
+  }
+  .panel {
+    border: 1px solid var(--border);
+    gap: 1.1rem;
+    min-width: 0;
+  }
+  .panel > legend {
+    float: left;
+    width: 100%;
+    font-size: var(--fs-lg);
+    font-weight: 800;
+    margin-bottom: 0.25rem;
+  }
+  .three {
+    display: grid;
+    gap: 1.1rem 1rem;
+  }
+  @media (min-width: 720px) {
+    .three {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  .current-pdf {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+  }
+  .current-pdf :global(svg) {
+    color: var(--accent);
+  }
+  .remove {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--danger);
+    font-size: var(--fs-sm);
+    cursor: pointer;
+  }
+  input[type='checkbox'] {
+    accent-color: var(--accent);
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+  .file {
+    padding: 0.75rem;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    width: 100%;
+  }
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 600;
+    min-height: 44px;
+  }
+  .sticky {
+    position: sticky;
+    top: 5rem;
+  }
+  .slug {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    overflow: hidden;
+  }
+  .slug span {
+    padding-left: 0.9rem;
+    color: var(--text-3);
+    font-size: var(--fs-sm);
+    white-space: nowrap;
+  }
+  .slug .input {
+    border: 0;
+    padding-left: 0.1rem;
+  }
+  .counter {
+    float: right;
+    font-weight: 500;
+    color: var(--text-3);
+    font-size: var(--fs-xs);
+  }
+  .counter.over {
+    color: var(--warning);
+  }
+  .serp {
+    padding: 1rem 1.1rem;
+    border-radius: var(--radius-sm);
+    background: #fff;
+    font-family: Arial, sans-serif;
+  }
+  .serp__url {
+    color: #202124;
+    font-size: 0.85rem;
+  }
+  .serp__title {
+    color: #1a0dab;
+    font-size: 1.15rem;
+    line-height: 1.3;
+    margin: 0.2rem 0;
+  }
+  .serp__desc {
+    color: #4d5156;
+    font-size: 0.875rem;
+  }
+</style>

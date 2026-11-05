@@ -1,0 +1,199 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import MachineVisual from '@/components/ui/MachineVisual.astro';
+import { mailtoHref, telHref } from '@/config/site';
+import { CONDITION_LABEL, STATUS_LABEL, formatPrice } from '@/lib/format';
+import { mediaUrl } from '@/lib/machines';
+import type { Machine } from '@/types/content';
+
+interface Props {
+  machine: Machine;
+  headingLevel?: 'h2' | 'h3';
+  /** Load the photo eagerly (first card above the fold). */
+  eager?: boolean;
+}
+
+const { machine: m, headingLevel = 'h3', eager = false } = Astro.props;
+const Heading = headingLevel;
+const href = `/for-sale/${m.slug}`;
+const photo = m.images[0];
+const conditionBadge = m.condition === 'new' ? 'badge--success' : m.condition === 'refurbished' ? 'badge--accent' : '';
+const sold = m.status === 'sold';
+const emailSubject = `Enquiry: ${m.title} (${m.reference})`;
+const emailBody = `Hi,\n\nI'm interested in the ${m.title} (ref ${m.reference}, ${formatPrice(m.price)}) listed on your website.\n\nName:\nBusiness:\nPhone:\nDelivery postcode:\n\nThanks`;
+---
+
+<article
+  class:list={['machine card card--link', { 'machine--sold': sold }]}
+  data-filter-item
+  data-facet={m.condition}
+  data-type={m.machineType}
+  data-price={m.price}
+  data-search={`${m.title} ${m.brand} ${m.model} ${m.machineType} ${m.condition} ${m.reference}`.toLowerCase()}
+>
+  <div class="machine__media">
+    {
+      photo ? (
+        <img
+          src={mediaUrl(photo.thumbKey ?? photo.key)}
+          alt={photo.alt || m.title}
+          width={photo.width ?? 800}
+          height={photo.height ?? 600}
+          loading={eager ? 'eager' : 'lazy'}
+          decoding="async"
+        />
+      ) : (
+        <MachineVisual type={m.machineType} class="machine__visual" />
+      )
+    }
+    <div class="machine__tags">
+      <span class:list={['badge', conditionBadge]}>{CONDITION_LABEL[m.condition]}</span>
+      {m.status !== 'available' && <span class:list={['badge', sold ? 'badge--danger' : 'badge--warning']}>{STATUS_LABEL[m.status]}</span>}
+    </div>
+  </div>
+
+  <div class="machine__body">
+    <p class="machine__meta">{m.brand} · {m.machineType}</p>
+    <Heading class="machine__title">
+      <a href={href} class="stretched">{m.title}</a>
+    </Heading>
+    <p>{m.summary}</p>
+    {
+      m.highlights.length > 0 && (
+        <ul class="machine__highlights">
+          {m.highlights.slice(0, 3).map((h) => (
+            <li>
+              <Icon name="check" size={14} /> {h}
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    <div class="machine__price">
+      <span class="machine__now">{formatPrice(m.price)}</span>
+      {m.wasPrice && m.wasPrice > m.price && <span class="machine__was"><span class="sr-only">Was </span>{formatPrice(m.wasPrice)}</span>}
+      <span class="machine__ref">Ref {m.reference}</span>
+    </div>
+
+    {
+      !sold && (
+        <div class="machine__actions">
+          <a href={telHref} class="btn btn--primary" aria-label={`Call about the ${m.title}`}>
+            <Icon name="phone" size={18} /> Call
+          </a>
+          <a href={mailtoHref(emailSubject, emailBody)} class="btn btn--secondary" aria-label={`Email about the ${m.title}`}>
+            <Icon name="mail" size={18} /> Email
+          </a>
+          <a href={href} class="btn btn--ghost machine__details" aria-label={`View details for the ${m.title}`}>
+            Details
+          </a>
+        </div>
+      )
+    }
+  </div>
+</article>
+
+<style>
+  .machine {
+    padding: 0;
+    overflow: hidden;
+    gap: 0;
+  }
+  .machine__media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background:
+      radial-gradient(20rem 12rem at 50% 30%, rgb(34 184 240 / 0.12), transparent 70%),
+      var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .machine__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .machine__media :global(.machine__visual) {
+    width: 100%;
+    height: 100%;
+    padding: 1.25rem 1.5rem 0.5rem;
+  }
+  .machine__tags {
+    position: absolute;
+    top: 0.85rem;
+    left: 0.85rem;
+    display: flex;
+    gap: 0.4rem;
+  }
+  .machine__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 1.25rem;
+    flex: 1;
+  }
+  .machine__meta {
+    font-size: var(--fs-xs) !important;
+    color: var(--text-3) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+  }
+  .machine__title {
+    font-size: var(--fs-lg);
+  }
+  .machine__highlights {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.9rem;
+    font-size: var(--fs-xs);
+    color: var(--text-2);
+  }
+  .machine__highlights li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .machine__highlights :global(svg) {
+    color: var(--accent);
+  }
+  .machine__price {
+    margin-top: auto;
+    padding-top: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+  }
+  .machine__now {
+    font-size: var(--fs-2xl);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .machine__was {
+    color: var(--text-3);
+    text-decoration: line-through;
+  }
+  .machine__ref {
+    margin-left: auto;
+    font-size: var(--fs-xs);
+    color: var(--text-3);
+    font-family: var(--font-mono);
+  }
+  .machine__actions {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  .machine__actions .btn {
+    padding-inline: 0.75rem;
+  }
+  .machine--sold .machine__media {
+    opacity: 0.55;
+  }
+</style>

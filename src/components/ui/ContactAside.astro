@@ -1,0 +1,82 @@
+---
+/** Sticky sidebar with call / book / email actions, used on detail pages. */
+import Icon from '@/components/ui/Icon.astro';
+import { SITE, mailtoHref, telHref } from '@/config/site';
+
+interface Props {
+  title?: string;
+  text?: string;
+}
+const { title = 'Need an engineer?', text = 'Call now for fast help, or book online and we’ll confirm a time.' } = Astro.props;
+---
+
+<aside class="aside" aria-label="Contact us">
+  <div class="aside__card">
+    <span class="icon-tile"><Icon name="wrench" size={22} /></span>
+    <h2>{title}</h2>
+    <p>{text}</p>
+    <a href={telHref} class="btn btn--primary btn--lg btn--block"><Icon name="phone" size={20} /> {SITE.phone.display}</a>
+    <a href="/booking" class="btn btn--secondary btn--block">Book a repair</a>
+    <a href={mailtoHref()} class="aside__email"><Icon name="mail" size={16} /> {SITE.email}</a>
+    <ul class="aside__hours">
+      {
+        SITE.hours.map((h) => (
+          <li>
+            <span>{h.days}</span>
+            <span>{h.time}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</aside>
+
+<style>
+  .aside__card {
+    display: grid;
+    gap: 0.85rem;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--accent-line);
+    background: linear-gradient(180deg, rgb(34 184 240 / 0.08), transparent 50%), var(--surface);
+  }
+  @media (min-width: 1000px) {
+    .aside {
+      position: sticky;
+      top: calc(var(--header-h) + 1.5rem);
+    }
+  }
+  h2 {
+    font-size: var(--fs-xl);
+  }
+  p {
+    color: var(--text-2);
+    font-size: var(--fs-sm);
+  }
+  .aside__email {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: var(--fs-sm);
+    overflow-wrap: anywhere;
+    min-height: 32px;
+  }
+  .aside__hours {
+    list-style: none;
+    padding: 0.85rem 0 0;
+    border-top: 1px solid var(--border);
+    display: grid;
+    gap: 0.35rem;
+    font-size: var(--fs-sm);
+  }
+  .aside__hours li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--text-2);
+  }
+  .aside__hours li span:first-child {
+    color: var(--text);
+    font-weight: 600;
+  }
+</style>

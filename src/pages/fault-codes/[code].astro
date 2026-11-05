@@ -1,0 +1,193 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+
+import ContactAside from '@/components/ui/ContactAside.astro';
+import CtaBanner from '@/components/ui/CtaBanner.astro';
+import Icon from '@/components/ui/Icon.astro';
+import PageHero from '@/components/ui/PageHero.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getBrands, getFaultCodes } from '@/lib/content';
+import { faqSchema } from '@/lib/seo';
+
+export const getStaticPaths = (async () => {
+  const codes = await getFaultCodes();
+  return codes.map((code) => ({
+    params: { code: code.slug },
+    props: { fault: code, related: codes.filter((c) => c.brand === code.brand && c.slug !== code.slug).slice(0, 5) },
+  }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { fault: f, related } = Astro.props as Props;
+const brand = (await getBrands()).find((b) => b.name.toLowerCase() === f.brand.toLowerCase());
+
+const name = `${f.brand} ${f.model} ${f.code}`.replace(/\s+/g, ' ');
+const path = `/fault-codes/${f.slug}`;
+const crumbs = [
+  { label: 'Fault Codes', href: '/fault-codes' },
+  { label: name, href: path },
+];
+const description = f.seoDescription ?? `${name}: ${f.title}. What it means, common causes and recommended actions.`;
+---
+
+<BaseLayout
+  title={f.seoTitle ?? `${name} Fault Code — ${f.title}`}
+  description={description}
+  breadcrumbs={crumbs}
+  jsonLd={[
+    faqSchema([
+      { q: `What does ${name} mean?`, a: `${f.title}. ${f.description}` },
+      ...(f.commonCauses.length ? [{ q: `What causes ${name}?`, a: f.commonCauses.join('; ') + '.' }] : []),
+      ...(f.recommendedActions.length ? [{ q: `How do I fix ${name}?`, a: f.recommendedActions.join('; ') + '.' }] : []),
+    ]),
+  ]}
+>
+  <PageHero eyebrow={`${f.brand} fault code`} title={`${name} — ${f.title}`} lead={f.description} breadcrumbs={crumbs} />
+
+  <section class="section">
+    <div class="container with-aside">
+      <div class="stack">
+        <div class="code-hero card">
+          <span class="code-hero__code">{f.code}</span>
+          <dl>
+            <div><dt>Brand</dt><dd>{brand ? <a href={`/brands/${brand.slug}`}>{f.brand}</a> : f.brand}</dd></div>
+            {f.model && <div><dt>Model</dt><dd>{f.model}</dd></div>}
+            <div><dt>Meaning</dt><dd>{f.title}</dd></div>
+          </dl>
+        </div>
+
+        {
+          f.commonCauses.length > 0 && (
+            <section aria-labelledby="causes-title">
+              <h2 id="causes-title" class="sub">Common causes</h2>
+              <ul class="checklist">
+                {f.commonCauses.map((c) => (
+                  <li>
+                    <Icon name="alert" size={18} /> {c}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        }
+
+        {
+          f.recommendedActions.length > 0 && (
+            <section aria-labelledby="actions-title">
+              <h2 id="actions-title" class="sub">Recommended actions</h2>
+              <ol class="steps">
+                {f.recommendedActions.map((a) => (
+                  <li>{a}</li>
+                ))}
+              </ol>
+            </section>
+          )
+        }
+
+        <p class="safety">
+          <Icon name="shield" size={18} />
+          <span>
+            Isolate the power and water supply before inspecting any machine. Electrical and internal component checks
+            should only be carried out by a qualified engineer.
+          </span>
+        </p>
+
+        {
+          related.length > 0 && (
+            <section aria-labelledby="related-title">
+              <h2 id="related-title" class="sub">
+                Other {f.brand} codes
+              </h2>
+              <ul class="link-list">
+                {related.map((r) => (
+                  <li>
+                    <a href={`/fault-codes/${r.slug}`}>
+                      <span class="code">{r.code}</span>
+                      <span>
+                        {r.model} — {r.title}
+                      </span>
+                      <Icon name="arrowRight" size={16} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        }
+      </div>
+      <ContactAside title="Still showing the fault?" text="Our engineers fix this fault regularly — call for same-day help." />
+    </div>
+  </section>
+
+  <CtaBanner />
+</BaseLayout>
+
+<style>
+  .stack {
+    display: grid;
+    gap: 2.25rem;
+  }
+  .sub {
+    font-size: var(--fs-xl);
+    margin-bottom: 1rem;
+  }
+  .code-hero {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .code-hero__code {
+    display: grid;
+    place-items: center;
+    min-width: 6rem;
+    height: 6rem;
+    padding-inline: 1rem;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-family: var(--font-mono);
+    font-size: 2.25rem;
+    font-weight: 800;
+  }
+  .code-hero dl {
+    display: grid;
+    gap: 0.35rem;
+  }
+  .code-hero dl div {
+    display: flex;
+    gap: 0.75rem;
+  }
+  .code-hero dt {
+    color: var(--text-3);
+    min-width: 5rem;
+  }
+  .code-hero dd {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .steps {
+    display: grid;
+    gap: 0.6rem;
+    padding-left: 1.25rem;
+    color: var(--text-2);
+  }
+  .steps li::marker {
+    color: var(--accent);
+    font-weight: 800;
+  }
+  .safety {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 1.1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgb(251 191 36 / 0.35);
+    background: rgb(251 191 36 / 0.08);
+    color: #fde68a;
+    font-size: var(--fs-sm);
+  }
+  .safety :global(svg) {
+    flex: none;
+    margin-top: 0.15em;
+  }
+</style>

@@ -1,0 +1,60 @@
+---
+import Breadcrumbs from '@/components/seo/Breadcrumbs.astro';
+import type { Crumb } from '@/lib/seo';
+
+interface Props {
+  title: string;
+  lead?: string | undefined;
+  eyebrow?: string | undefined;
+  /** Trail excluding Home — the layout adds Home for schema; here we show it too. */
+  breadcrumbs: Crumb[];
+}
+
+const { title, lead, eyebrow, breadcrumbs } = Astro.props;
+---
+
+<section class="page-hero">
+  <div class="container page-hero__inner">
+    <Breadcrumbs crumbs={[{ label: 'Home', href: '/' }, ...breadcrumbs]} />
+    {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+    <h1>{title}</h1>
+    {lead && <p class="lead">{lead}</p>}
+    {Astro.slots.has('default') && <div class="page-hero__extra"><slot /></div>}
+  </div>
+</section>
+
+<style>
+  .page-hero {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(60rem 24rem at 85% -10%, rgb(34 184 240 / 0.16), transparent 60%),
+      linear-gradient(180deg, var(--bg-raised), var(--bg));
+  }
+  .page-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgb(148 163 184 / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(148 163 184 / 0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: linear-gradient(180deg, black, transparent 85%);
+    pointer-events: none;
+  }
+  .page-hero__inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 1rem;
+    padding-block: clamp(2.5rem, 2rem + 3vw, 4.5rem);
+  }
+  h1 {
+    font-size: var(--fs-3xl);
+    max-width: 22ch;
+  }
+  .page-hero__extra {
+    margin-top: 0.5rem;
+  }
+</style>

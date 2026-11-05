@@ -316,9 +316,9 @@ Project is complete when:
 - Lighthouse 95+
 - WCAG 2.2 AA compliant
 - SEO implemented
-- CMS connected
+- Content editable in src/data/content.ts (no CMS)
 - Manuals searchable
 - Fault codes searchable
 - Forms working
-- Vercel deployment ready
+- Cloudflare Workers deployment ready
 - Production ready

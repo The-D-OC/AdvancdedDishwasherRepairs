@@ -1,0 +1,108 @@
+---
+import EnquiryForm from '@/components/forms/EnquiryForm.astro';
+import ContactAside from '@/components/ui/ContactAside.astro';
+import Icon from '@/components/ui/Icon.astro';
+import PageHero from '@/components/ui/PageHero.astro';
+import { SITE, telHref } from '@/config/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const crumbs = [{ label: 'Book a Repair', href: '/booking' }];
+---
+
+<BaseLayout
+  title="Book a Commercial Dishwasher Repair"
+  description="Book a commercial dishwasher or glasswasher repair online. We’ll call to confirm a time and give you a fixed-price quote."
+  breadcrumbs={crumbs}
+>
+  <PageHero
+    eyebrow="Book a repair"
+    title="Book an engineer"
+    lead="Tell us about the machine and the fault. We’ll call to confirm a time and a fixed-price quote before any work starts."
+    breadcrumbs={crumbs}
+  />
+
+  <section class="section">
+    <div class="container with-aside">
+      <div class="stack">
+        <div class="urgent">
+          <Icon name="alert" size={22} />
+          <p>
+            <strong>Machine down mid-service?</strong> Don’t wait for a reply — call <a href={telHref}>{SITE.phone.display}</a> now
+            and we’ll get an engineer to you as quickly as possible.
+          </p>
+        </div>
+
+        <ol class="progress" aria-label="How booking works">
+          <li><span>1</span> Send your details</li>
+          <li><span>2</span> We call to confirm</li>
+          <li><span>3</span> Engineer visits</li>
+        </ol>
+
+        <div class="card">
+          <EnquiryForm type="booking" />
+        </div>
+      </div>
+      <ContactAside />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .stack {
+    display: grid;
+    gap: 1.5rem;
+  }
+  .urgent {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    padding: 1rem 1.2rem;
+    border-radius: var(--radius);
+    border: 1px solid rgb(248 113 113 / 0.4);
+    background: rgb(248 113 113 / 0.08);
+  }
+  .urgent :global(svg) {
+    flex: none;
+    color: var(--danger);
+    margin-top: 0.1em;
+  }
+  .urgent a {
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .progress {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    font-size: var(--fs-sm);
+    color: var(--text-2);
+    font-weight: 600;
+  }
+  .progress li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .progress span {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 800;
+  }
+  @media (max-width: 560px) {
+    .progress {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

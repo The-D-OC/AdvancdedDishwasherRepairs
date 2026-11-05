@@ -1,0 +1,365 @@
+---
+import EnquiryForm from '@/components/forms/EnquiryForm.astro';
+import Breadcrumbs from '@/components/seo/Breadcrumbs.astro';
+import MachineCard from '@/components/sale/MachineCard.astro';
+import Icon from '@/components/ui/Icon.astro';
+import MachineVisual from '@/components/ui/MachineVisual.astro';
+import { SITE, mailtoHref, telHref } from '@/config/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { CONDITION_LABEL, STATUS_LABEL, formatPrice, truncate } from '@/lib/format';
+import { getMachineBySlug, listPublicMachines, mediaUrl } from '@/lib/machines';
+import { publicClient } from '@/lib/supabase';
+import { absoluteUrl, itemListSchema, productSchema } from '@/lib/seo';
+
+// Rendered on each request so edits in /admin appear immediately.
+export const prerender = false;
+
+const db = publicClient();
+const m = await getMachineBySlug(db, Astro.params['machine'] ?? '');
+if (!m) {
+  return new Response(null, { status: 404 });
+}
+const related = (await listPublicMachines(db)).filter((r) => r.id !== m.id && r.status !== 'sold').slice(0, 3);
+Astro.response.headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+
+const path = `/for-sale/${m.slug}`;
+const crumbs = [
+  { label: 'For Sale', href: '/for-sale' },
+  { label: m.title, href: path },
+];
+const sold = m.status === 'sold';
+const ref = `${m.title} (${m.reference})`;
+const emailBody = `Hi,\n\nI'm interested in the ${m.title} (ref ${m.reference}, ${formatPrice(m.price)}).\n\nName:\nBusiness:\nPhone:\nDelivery postcode:\n\nThanks`;
+const description = m.seoDescription ?? truncate(`${m.summary} ${formatPrice(m.price)}. Call ${SITE.phone.display} or email to enquire.`, 158);
+const firstImage = m.images[0];
+const shareImage = firstImage ? absoluteUrl(mediaUrl(firstImage.key)) : undefined;
+---
+
+<BaseLayout
+  title={m.seoTitle ?? `${m.title} For Sale — ${formatPrice(m.price)}`}
+  description={description}
+  breadcrumbs={crumbs}
+  ogType="product"
+  ogImage={shareImage}
+  jsonLd={[
+    productSchema({
+      name: m.title,
+      description: m.summary,
+      path,
+      brand: m.brand,
+      sku: m.reference,
+      price: m.price,
+      condition: m.condition,
+      status: m.status,
+      image: shareImage,
+    }),
+    ...(related.length
+      ? [itemListSchema('More machines for sale', related.map((r) => ({ name: r.title, path: `/for-sale/${r.slug}` })))]
+      : []),
+  ]}
+>
+  <div class="container product">
+    <div class="product__crumbs">
+      <Breadcrumbs crumbs={[{ label: 'Home', href: '/' }, ...crumbs]} />
+    </div>
+
+    <div class="product__gallery">
+      {
+        m.images.length > 0 ? (
+          <>
+            {m.images.map((img, i) => (
+              <img
+                src={mediaUrl(img.key)}
+                alt={img.alt || `${m.title} — photo ${i + 1}`}
+                width={img.width ?? 1600}
+                height={img.height ?? 1200}
+                loading={i === 0 ? 'eager' : 'lazy'}
+                fetchpriority={i === 0 ? 'high' : undefined}
+                decoding="async"
+              />
+            ))}
+          </>
+        ) : (
+          <div class="product__placeholder">
+            <MachineVisual type={m.machineType} />
+            <p>Photos available on request</p>
+          </div>
+        )
+      }
+    </div>
+
+    <div class="product__info">
+      <div class="product__badges">
+        <span class:list={['badge', m.condition === 'new' ? 'badge--success' : m.condition === 'refurbished' ? 'badge--accent' : '']}>
+          {CONDITION_LABEL[m.condition]}
+        </span>
+        <span class:list={['badge', sold ? 'badge--danger' : m.status === 'reserved' ? 'badge--warning' : 'badge--success']}>
+          {STATUS_LABEL[m.status]}
+        </span>
+        <span class="badge">Ref {m.reference}</span>
+      </div>
+      <p class="product__meta">{m.brand} · {m.machineType}</p>
+      <h1>{m.title}</h1>
+      <p class="lead">{m.summary}</p>
+
+      <div class="product__price">
+        <span class="product__now">{formatPrice(m.price)}</span>
+        {m.wasPrice && m.wasPrice > m.price && <span class="product__was"><span class="sr-only">Was </span>{formatPrice(m.wasPrice)}</span>}
+      </div>
+      {m.warranty && <p class="product__warranty"><Icon name="shield" size={18} /> {m.warranty}</p>}
+
+      <div class="buy-box">
+        {
+          sold ? (
+            <p>
+              This machine has been sold. <a href="/for-sale">See current stock</a> or tell us what you’re looking for.
+            </p>
+          ) : (
+            <>
+              <p class="buy-box__title">Interested? Contact us to buy or ask a question</p>
+              <div class="buy-box__actions">
+                <a href={telHref} class="btn btn--primary btn--lg btn--block">
+                  <Icon name="phone" size={20} /> Call {SITE.phone.display}
+                </a>
+                <a href={mailtoHref(`Enquiry: ${ref}`, emailBody)} class="btn btn--secondary btn--lg btn--block">
+                  <Icon name="mail" size={20} /> Email about this machine
+                </a>
+                <a href="#enquiry" class="btn btn--ghost btn--block">
+                  Or send an enquiry form
+                </a>
+              </div>
+            </>
+          )
+        }
+      </div>
+
+      {
+        m.highlights.length > 0 && (
+          <ul class="checklist">
+            {m.highlights.map((h) => (
+              <li>
+                <Icon name="check" size={18} /> {h}
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </div>
+
+    <div class="product__details">
+      {
+        m.description.length > 0 && (
+          <section aria-labelledby="desc-title">
+            <h2 id="desc-title">About this machine</h2>
+            <div class="prose">
+              {m.description.map((p) => (
+                <p>{p}</p>
+              ))}
+            </div>
+          </section>
+        )
+      }
+      {
+        m.specs.length > 0 && (
+          <section aria-labelledby="spec-title">
+            <h2 id="spec-title">Specification</h2>
+            <table class="spec-table">
+              <tbody>
+                <tr>
+                  <th scope="row">Brand</th>
+                  <td>{m.brand}</td>
+                </tr>
+                {m.model && (
+                  <tr>
+                    <th scope="row">Model</th>
+                    <td>{m.model}</td>
+                  </tr>
+                )}
+                {m.specs.map((s) => (
+                  <tr>
+                    <th scope="row">{s.label}</th>
+                    <td>{s.value}</td>
+                  </tr>
+                ))}
+                <tr>
+                  <th scope="row">Condition</th>
+                  <td>{CONDITION_LABEL[m.condition]}</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        )
+      }
+    </div>
+  </div>
+
+  {
+    !sold && (
+      <section id="enquiry" class="section section--alt" aria-labelledby="enquiry-title">
+        <div class="container narrow">
+          <h2 id="enquiry-title" class="section-title">
+            Enquire about the {m.title}
+          </h2>
+          <p class="muted">
+            We’ll get back to you quickly with availability, delivery and installation options. Prefer email? Write to{' '}
+            <a href={mailtoHref(`Enquiry: ${ref}`, emailBody)}>{SITE.email}</a>.
+          </p>
+          <div class="card">
+            <EnquiryForm type="machine" machineRef={ref} />
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    related.length > 0 && (
+      <section class="section" aria-labelledby="related-title">
+        <div class="container">
+          <div class="section-head section-head--split">
+            <h2 id="related-title" class="section-title">
+              More machines for sale
+            </h2>
+            <a href="/for-sale" class="btn btn--ghost">
+              View all <Icon name="arrowRight" size={18} />
+            </a>
+          </div>
+          <div class="grid grid--3">
+            {related.map((r) => (
+              <MachineCard machine={r} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .product {
+    display: grid;
+    gap: 2rem 3rem;
+    padding-block: 1.5rem var(--section-y);
+    grid-template-areas: 'crumbs' 'gallery' 'info' 'details';
+  }
+  @media (min-width: 1000px) {
+    .product {
+      grid-template-columns: 1.1fr 0.9fr;
+      grid-template-areas:
+        'crumbs crumbs'
+        'gallery info'
+        'details info';
+      align-items: start;
+    }
+    .product__info {
+      position: sticky;
+      top: calc(var(--header-h) + 1.5rem);
+    }
+  }
+  .product__crumbs {
+    grid-area: crumbs;
+  }
+  .product__gallery {
+    grid-area: gallery;
+    display: grid;
+    gap: 0.75rem;
+  }
+  .product__gallery img {
+    width: 100%;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  .product__placeholder {
+    display: grid;
+    justify-items: center;
+    gap: 0.5rem;
+    padding: 2rem;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background:
+      radial-gradient(26rem 16rem at 50% 35%, rgb(34 184 240 / 0.16), transparent 70%),
+      var(--surface);
+  }
+  .product__placeholder :global(svg) {
+    width: 100%;
+    max-width: 28rem;
+    height: auto;
+  }
+  .product__placeholder p {
+    color: var(--text-3);
+    font-size: var(--fs-sm);
+  }
+  .product__info {
+    grid-area: info;
+    display: grid;
+    gap: 1rem;
+  }
+  .product__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .product__meta {
+    color: var(--text-3);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  h1 {
+    font-size: var(--fs-2xl);
+  }
+  .product__price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+  .product__now {
+    font-size: clamp(2rem, 1.6rem + 1.5vw, 2.75rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+  .product__was {
+    color: var(--text-3);
+    text-decoration: line-through;
+    font-size: var(--fs-lg);
+  }
+  .product__warranty {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--success);
+    font-weight: 600;
+    font-size: var(--fs-sm);
+  }
+  .buy-box {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--accent-line);
+    background: linear-gradient(180deg, rgb(34 184 240 / 0.08), transparent), var(--surface);
+  }
+  .buy-box__title {
+    font-weight: 700;
+  }
+  .buy-box__actions {
+    display: grid;
+    gap: 0.6rem;
+  }
+  .product__details {
+    grid-area: details;
+    display: grid;
+    gap: 2.5rem;
+  }
+  .product__details h2 {
+    font-size: var(--fs-xl);
+    margin-bottom: 1rem;
+  }
+  .narrow {
+    max-width: 52rem;
+    display: grid;
+    gap: 1rem;
+  }
+</style>

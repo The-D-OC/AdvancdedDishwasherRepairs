@@ -1,0 +1,69 @@
+---
+/**
+ * Server island: renders current machines from the database on otherwise
+ * static pages (home, brand pages). Use with `server:defer`.
+ */
+import Icon from '@/components/ui/Icon.astro';
+import { listPublicMachines } from '@/lib/machines';
+import { publicClient } from '@/lib/supabase';
+import MachineCard from './MachineCard.astro';
+
+interface Props {
+  /** Only show this brand (case-insensitive). */
+  brand?: string;
+  limit?: number;
+  /** Render as a compact link list instead of cards. */
+  variant?: 'cards' | 'links';
+  /** Heading shown above the links variant (only when there are results). */
+  heading?: string;
+}
+
+const { brand, limit = 3, variant = 'cards', heading } = Astro.props;
+const all = await listPublicMachines(publicClient());
+const machines = all
+  .filter((m) => m.status !== 'sold')
+  .filter((m) => !brand || m.brand.toLowerCase() === brand.toLowerCase())
+  .slice(0, limit);
+---
+
+{
+  machines.length === 0 ? (
+    variant === 'cards' ? (
+      <p class="muted">
+        New stock arrives regularly — <a href="/for-sale#enquiry">tell us what you’re looking for</a>.
+      </p>
+    ) : null
+  ) : variant === 'cards' ? (
+    <div class="grid grid--3">
+      {machines.map((m) => (
+        <MachineCard machine={m} />
+      ))}
+    </div>
+  ) : (
+    <section>
+    {heading && <h2 class="live-heading">{heading}</h2>}
+    <ul class="link-list">
+      {machines.map((m) => (
+        <li>
+          <a href={`/for-sale/${m.slug}`}>
+            <span class="code">
+              <Icon name="tag" size={16} />
+            </span>
+            <span>
+              {m.title} — £{m.price.toLocaleString('en-GB')}
+            </span>
+            <Icon name="arrowRight" size={16} />
+          </a>
+        </li>
+      ))}
+    </ul>
+    </section>
+  )
+}
+
+<style>
+  .live-heading {
+    font-size: var(--fs-xl);
+    margin-bottom: 1rem;
+  }
+</style>

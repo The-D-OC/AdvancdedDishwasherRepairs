@@ -1,0 +1,74 @@
+---
+import MachineForm from '@/components/admin/MachineForm.astro';
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import {
+  collectImages,
+  createMachine,
+  deleteImages,
+  emptyMachineInput,
+  nextReference,
+  parseMachineForm,
+  slugTaken,
+  type MachineInput,
+} from '@/lib/machines';
+
+export const prerender = false;
+
+const db = Astro.locals.supabase!;
+let values: MachineInput = { ...emptyMachineInput(), reference: await nextReference(db) };
+let errors: Record<string, string> = {};
+let imageErrors: string[] = [];
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const parsed = parseMachineForm(form);
+  values = parsed.input;
+  errors = parsed.errors;
+
+  // Make the slug unique for new listings (hobart-am15, hobart-am15-2, …).
+  if (values.slug && !errors['slug']) {
+    const base = values.slug;
+    for (let n = 2; await slugTaken(db, values.slug); n++) values.slug = `${base}-${n}`;
+  }
+
+  if (Object.keys(errors).length === 0) {
+    const { images, errors: imgErrs } = await collectImages(db, form, [], values.slug, values.title);
+    imageErrors = imgErrs;
+    if (imageErrors.length === 0) {
+      const id = await createMachine(db, values, images);
+      return Astro.redirect(`/admin/machines/${id}?created=1`, 303);
+    }
+    // Don't leave orphaned uploads behind if we're re-showing the form.
+    await deleteImages(db, images);
+  }
+}
+
+const hasErrors = Object.keys(errors).length > 0 || imageErrors.length > 0;
+---
+
+<AdminLayout title="Add machine">
+  <div class="admin-head">
+    <div>
+      <a href="/admin">← All listings</a>
+      <h1>Add a machine</h1>
+    </div>
+  </div>
+
+  {
+    hasErrors && (
+      <div class="notice notice--error" role="alert">
+        Please fix the highlighted fields.
+        {imageErrors.length > 0 && (
+          <ul>
+            {imageErrors.map((e) => (
+              <li>{e}</li>
+            ))}
+          </ul>
+        )}
+        {imageErrors.length > 0 && <p>Please choose the photos again.</p>}
+      </div>
+    )
+  }
+
+  <MachineForm mode="new" values={values} errors={errors} />
+</AdminLayout>

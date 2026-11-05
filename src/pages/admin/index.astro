@@ -1,0 +1,150 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import { CONDITION_LABEL, STATUS_LABEL, formatPrice } from '@/lib/format';
+import { listAllMachines, mediaUrl } from '@/lib/machines';
+import type { MachineStatus } from '@/types/content';
+
+export const prerender = false;
+
+const machines = await listAllMachines(Astro.locals.supabase!);
+const flash = Astro.url.searchParams.get('deleted') ? 'Listing deleted.' : '';
+const counts = machines.reduce<Record<string, number>>((acc, m) => ({ ...acc, [m.status]: (acc[m.status] ?? 0) + 1 }), {});
+const statusClass: Record<MachineStatus, string> = {
+  available: 'badge--success',
+  reserved: 'badge--warning',
+  sold: 'badge--danger',
+  draft: '',
+};
+const updated = (iso: string) =>
+  new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+---
+
+<AdminLayout title="Listings">
+  <div class="admin-head">
+    <div>
+      <h1>Machines for sale</h1>
+      <p class="muted">
+        {[`${machines.length} listings`, ...(['available', 'reserved', 'sold', 'draft'] as MachineStatus[]).map((s) => `${counts[s] ?? 0} ${STATUS_LABEL[s].toLowerCase()}`)].join(' · ')}
+      </p>
+    </div>
+    <a href="/admin/machines/new" class="btn btn--primary btn--lg"><Icon name="tag" size={20} /> Add a machine</a>
+  </div>
+
+  {flash && <p class="notice notice--ok" role="status">{flash}</p>}
+
+  {
+    machines.length === 0 ? (
+      <div class="card empty">
+        <h2>No machines yet</h2>
+        <p>Add your first listing — it appears on the website as soon as you save.</p>
+        <a href="/admin/machines/new" class="btn btn--primary">
+          Add a machine
+        </a>
+      </div>
+    ) : (
+      <ul class="rows">
+        {machines.map((m) => {
+          const photo = m.images[0];
+          return (
+            <li class="row card">
+              <div class="row__thumb">
+                {photo ? (
+                  <img src={mediaUrl(photo.thumbKey ?? photo.key)} alt="" width="96" height="72" loading="lazy" />
+                ) : (
+                  <span>No photo</span>
+                )}
+              </div>
+              <div class="row__main">
+                <a href={`/admin/machines/${m.id}`} class="row__title">
+                  {m.title}
+                </a>
+                <p class="row__meta">
+                  {m.reference} · {m.brand} · {CONDITION_LABEL[m.condition]} · {m.images.length} photo{m.images.length === 1 ? '' : 's'} · updated {updated(m.updatedAt)}
+                </p>
+              </div>
+              <div class="row__price">{formatPrice(m.price)}</div>
+              <span class:list={['badge', statusClass[m.status]]}>{STATUS_LABEL[m.status]}</span>
+              {m.featured && <span class="badge badge--accent">Featured</span>}
+              <div class="row__actions">
+                <a href={`/admin/machines/${m.id}`} class="btn btn--secondary">
+                  Edit
+                </a>
+                {m.status !== 'draft' && (
+                  <a href={`/for-sale/${m.slug}`} class="btn btn--ghost" target="_blank" rel="noopener" aria-label={`View ${m.title} on the website`}>
+                    View
+                  </a>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    )
+  }
+</AdminLayout>
+
+<style>
+  .rows {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 0.6rem;
+  }
+  .row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    padding: 0.75rem 1rem;
+  }
+  .row__thumb {
+    flex: none;
+    width: 96px;
+    height: 72px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    display: grid;
+    place-items: center;
+    font-size: var(--fs-xs);
+    color: var(--text-3);
+  }
+  .row__thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .row__main {
+    flex: 1 1 16rem;
+    min-width: 0;
+  }
+  .row__title {
+    color: var(--text);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .row__title:hover {
+    color: var(--accent);
+  }
+  .row__meta {
+    font-size: var(--fs-xs) !important;
+    color: var(--text-3) !important;
+  }
+  .row__price {
+    font-weight: 800;
+    font-size: var(--fs-lg);
+    min-width: 6rem;
+  }
+  .row__actions {
+    display: flex;
+    gap: 0.4rem;
+  }
+  .row__actions .btn {
+    min-height: 40px;
+  }
+  .empty {
+    align-items: flex-start;
+  }
+</style>

@@ -1,0 +1,181 @@
+---
+import { Image } from 'astro:assets';
+
+import Icon from '@/components/ui/Icon.astro';
+import { SITE, mailtoHref, telHref } from '@/config/site';
+import logo from '@/assets/brand/logo.webp';
+
+const groups = [
+  {
+    title: 'Services',
+    links: [
+      { label: 'Repairs', href: '/services/repairs' },
+      { label: 'Installation', href: '/services/installation' },
+      { label: 'Planned maintenance', href: '/services/maintenance' },
+      { label: 'Emergency call outs', href: '/services/emergency' },
+      { label: 'Machines for sale', href: '/for-sale' },
+    ],
+  },
+  {
+    title: 'Resources',
+    links: [
+      { label: 'Fault codes', href: '/fault-codes' },
+      { label: 'Manuals', href: '/manuals' },
+      { label: 'Brands we repair', href: '/brands' },
+      { label: 'Blog', href: '/blog' },
+    ],
+  },
+  {
+    title: 'Company',
+    links: [
+      { label: 'About us', href: '/about' },
+      { label: 'Coverage areas', href: '/coverage-areas' },
+      { label: 'Contact', href: '/contact' },
+      { label: 'Book a repair', href: '/booking' },
+    ],
+  },
+];
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container site-footer__grid">
+    <div class="site-footer__brand">
+      <Image src={logo} alt={SITE.name} width={180} height={75} class="site-footer__logo" />
+      <p>{SITE.description}</p>
+      <ul class="site-footer__contact">
+        <li><a href={telHref}><Icon name="phone" size={18} /> {SITE.phone.display}</a></li>
+        <li><a href={mailtoHref()}><Icon name="mail" size={18} /> {SITE.email}</a></li>
+        <li><span><Icon name="mapPin" size={18} /> {SITE.address.locality}, {SITE.address.region}</span></li>
+      </ul>
+    </div>
+
+    {
+      groups.map((g) => (
+        <nav class="site-footer__col" aria-label={g.title}>
+          <h2>{g.title}</h2>
+          <ul>
+            {g.links.map((l) => (
+              <li>
+                <a href={l.href}>{l.label}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ))
+    }
+
+    <div class="site-footer__col">
+      <h2>Opening hours</h2>
+      <dl class="hours">
+        {
+          SITE.hours.map((h) => (
+            <div>
+              <dt>{h.days}</dt>
+              <dd>{h.time}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </div>
+
+  <div class="site-footer__bottom">
+    <div class="container site-footer__bottom-inner">
+      <p>© {year} {SITE.legalName}. Registered in England &amp; Wales.</p>
+      <p><a href="/sitemap-index.xml">Sitemap</a></p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--bg-raised);
+    border-top: 1px solid var(--border);
+    color: var(--text-2);
+    font-size: var(--fs-sm);
+  }
+  .site-footer__grid {
+    display: grid;
+    gap: 2.5rem 2rem;
+    padding-block: clamp(3rem, 2rem + 3vw, 4.5rem);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  }
+  .site-footer__brand {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 1rem;
+    max-width: 26rem;
+  }
+  @media (min-width: 1000px) {
+    .site-footer__grid {
+      grid-template-columns: 1.6fr repeat(4, 1fr);
+    }
+    .site-footer__brand {
+      grid-column: auto;
+    }
+  }
+  .site-footer__logo {
+    width: 170px;
+    height: auto;
+  }
+  .site-footer h2 {
+    color: var(--text);
+    font-size: var(--fs-sm);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .site-footer ul {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 0.6rem;
+  }
+  .site-footer a {
+    color: var(--text-2);
+    text-decoration: none;
+  }
+  .site-footer a:hover {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+  .site-footer__contact a,
+  .site-footer__contact span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 32px;
+    overflow-wrap: anywhere;
+  }
+  .site-footer__contact :global(svg) {
+    color: var(--accent);
+    flex: none;
+  }
+  .site-footer__contact li:first-child a {
+    color: var(--text);
+    font-size: var(--fs-lg);
+    font-weight: 700;
+  }
+  .hours {
+    display: grid;
+    gap: 0.6rem;
+  }
+  .hours dt {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .site-footer__bottom {
+    border-top: 1px solid var(--border);
+  }
+  .site-footer__bottom-inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    padding-block: 1.25rem;
+    color: var(--text-3);
+    font-size: var(--fs-xs);
+  }
+</style>

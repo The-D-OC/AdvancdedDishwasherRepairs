@@ -1,0 +1,117 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+
+import ContactAside from '@/components/ui/ContactAside.astro';
+import CtaBanner from '@/components/ui/CtaBanner.astro';
+import Icon from '@/components/ui/Icon.astro';
+import PageHero from '@/components/ui/PageHero.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getLocations, getServices } from '@/lib/content';
+import { serviceSchema } from '@/lib/seo';
+
+export const getStaticPaths = (async () => {
+  const locations = await getLocations();
+  return locations.map((location) => ({ params: { location: location.slug }, props: { location } }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { location: l } = Astro.props as Props;
+const services = await getServices();
+const path = `/coverage-areas/${l.slug}`;
+const crumbs = [
+  { label: 'Coverage Areas', href: '/coverage-areas' },
+  { label: l.name, href: path },
+];
+const description = l.seoDescription ?? `Commercial dishwasher repair in ${l.name}. Fast response and emergency call outs.`;
+---
+
+<BaseLayout
+  title={l.seoTitle ?? `Commercial Dishwasher Repair ${l.name}`}
+  description={description}
+  breadcrumbs={crumbs}
+  jsonLd={[{ ...serviceSchema(`Commercial dishwasher repair in ${l.name}`, description, path), areaServed: { '@type': 'Place', name: l.coverageArea } }]}
+>
+  <PageHero eyebrow="Coverage area" title={`Commercial dishwasher repair in ${l.name}`} lead={l.coverageArea} breadcrumbs={crumbs} />
+
+  <section class="section">
+    <div class="container with-aside">
+      <div class="stack">
+        <div class="prose">
+          {l.content.split(/\n{2,}/).map((p) => <p>{p}</p>)}
+        </div>
+
+        {
+          l.towns.length > 0 && (
+            <section aria-labelledby="towns-title">
+              <h2 id="towns-title" class="sub">
+                Towns we cover
+              </h2>
+              <ul class="towns">
+                {l.towns.map((t) => (
+                  <li>
+                    <Icon name="mapPin" size={16} /> {t}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        }
+
+        <section aria-labelledby="services-title">
+          <h2 id="services-title" class="sub">Services in {l.name}</h2>
+          <div class="grid grid--2">
+            {
+              services.map((s) => (
+                <article class="card card--link">
+                  <span class="icon-tile">
+                    <Icon name={s.icon} size={20} />
+                  </span>
+                  <h3>
+                    <a href={`/services/${s.slug}`} class="stretched">
+                      {s.title}
+                    </a>
+                  </h3>
+                  <p>{s.description}</p>
+                </article>
+              ))
+            }
+          </div>
+        </section>
+      </div>
+      <ContactAside title={`Engineer needed in ${l.name}?`} />
+    </div>
+  </section>
+
+  <CtaBanner />
+</BaseLayout>
+
+<style>
+  .stack {
+    display: grid;
+    gap: 2.5rem;
+  }
+  .sub {
+    font-size: var(--fs-xl);
+    margin-bottom: 1rem;
+  }
+  .towns {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    gap: 0.5rem;
+  }
+  .towns li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+  }
+  .towns :global(svg) {
+    color: var(--accent);
+  }
+</style>

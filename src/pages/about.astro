@@ -1,0 +1,109 @@
+---
+import CtaBanner from '@/components/ui/CtaBanner.astro';
+import Icon, { type IconName } from '@/components/ui/Icon.astro';
+import PageHero from '@/components/ui/PageHero.astro';
+import StatStrip from '@/components/ui/StatStrip.astro';
+import { SITE } from '@/config/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getBrands } from '@/lib/content';
+
+const brands = await getBrands();
+const crumbs = [{ label: 'About', href: '/about' }];
+
+const values: { icon: IconName; title: string; text: string }[] = [
+  { icon: 'clock', title: 'Fast response', text: 'Same-day service where possible when your machine is down.' },
+  { icon: 'wrench', title: 'Experienced engineers', text: 'Trained on every major brand of commercial warewashing equipment.' },
+  { icon: 'tag', title: 'Fixed pricing', text: 'Quoted before we start. No surprises on the invoice.' },
+  { icon: 'shield', title: 'Guaranteed work', text: '90-day parts and labour warranty on repairs as standard.' },
+];
+---
+
+<BaseLayout
+  title="About Us"
+  description={`${SITE.name} has repaired, serviced and installed commercial dishwashers across the North West since ${SITE.foundingYear}.`}
+  breadcrumbs={crumbs}
+  jsonLd={[{ '@context': 'https://schema.org', '@type': 'AboutPage', name: 'About us', url: `${SITE.url}/about` }]}
+>
+  <PageHero
+    eyebrow="About us"
+    title={`Keeping commercial kitchens running since ${SITE.foundingYear}`}
+    lead="A specialist team focused on one thing: commercial dishwashers and glasswashers."
+    breadcrumbs={crumbs}
+  />
+
+  <section class="section">
+    <div class="container about">
+      <div class="prose">
+        <p>
+          Founded in {SITE.foundingYear}, {SITE.name} has grown into one of the North West’s leading specialists in
+          commercial dishwasher and glasswasher repair, maintenance and installation.
+        </p>
+        <p>
+          Our engineers look after hotels, restaurants, pubs, schools, hospitals and catering businesses of every size —
+          from a single bar glasswasher to multi-site maintenance contracts.
+        </p>
+        <p>
+          We work on all major brands including {brands.slice(0, 6).map((b) => b.name).join(', ')} and more, and carry an
+          extensive stock of genuine spare parts for the fastest possible fix.
+        </p>
+      </div>
+      <ul class="checklist about__list">
+        <li><Icon name="check" size={18} /> Fully trained, experienced engineers</li>
+        <li><Icon name="check" size={18} /> All major manufacturers covered</li>
+        <li><Icon name="check" size={18} /> Honest, transparent pricing</li>
+        <li><Icon name="check" size={18} /> Refurbished &amp; new machines for sale</li>
+      </ul>
+    </div>
+    <div class="container stats"><StatStrip /></div>
+  </section>
+
+  <section class="section section--alt" aria-labelledby="values-title">
+    <div class="container">
+      <div class="section-head section-head--center">
+        <p class="eyebrow">How we work</p>
+        <h2 id="values-title" class="section-title">What you can expect from us</h2>
+      </div>
+      <div class="grid grid--4">
+        {
+          values.map((v) => (
+            <div class="card">
+              <span class="icon-tile">
+                <Icon name={v.icon} size={22} />
+              </span>
+              <h3>{v.title}</h3>
+              <p>{v.text}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <CtaBanner title="Talk to an engineer today" />
+</BaseLayout>
+
+<style>
+  .about {
+    display: grid;
+    gap: 2rem 4rem;
+    align-items: start;
+  }
+  @media (min-width: 900px) {
+    .about {
+      grid-template-columns: 1.4fr 1fr;
+    }
+  }
+  .about__list {
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .about__list li {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .stats {
+    margin-top: 3rem;
+  }
+</style>

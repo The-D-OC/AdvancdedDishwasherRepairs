@@ -1,0 +1,70 @@
+---
+import { Image } from 'astro:assets';
+
+import CtaBanner from '@/components/ui/CtaBanner.astro';
+import Icon from '@/components/ui/Icon.astro';
+import PageHero from '@/components/ui/PageHero.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getBlogPosts } from '@/lib/content';
+import { formatDate } from '@/lib/format';
+
+const posts = await getBlogPosts();
+const crumbs = [{ label: 'Blog', href: '/blog' }];
+---
+
+<BaseLayout
+  title="Commercial Dishwasher Advice & News"
+  description="Practical advice on looking after commercial dishwashers and glasswashers — maintenance tips, running costs and buying guides."
+  breadcrumbs={crumbs}
+>
+  <PageHero
+    eyebrow="Blog"
+    title="Advice & news"
+    lead="Practical tips from our engineers on keeping commercial warewashing equipment running well."
+    breadcrumbs={crumbs}
+  />
+
+  <section class="section">
+    <div class="container">
+      <div class="grid grid--3">
+        {
+          posts.map((p) => (
+            <article class="card card--link post">
+              {p.featuredImage && (
+                <Image src={p.featuredImage.src} alt="" widths={[400, 640]} sizes="(min-width: 1000px) 360px, 92vw" class="post__img" />
+              )}
+              <time datetime={p.publishDate}>{formatDate(p.publishDate)}</time>
+              <h2>
+                <a href={`/blog/${p.slug}`} class="stretched">
+                  {p.title}
+                </a>
+              </h2>
+              <p>{p.excerpt}</p>
+              <span class="card-more" aria-hidden="true">
+                Read article <Icon name="arrowRight" size={16} />
+              </span>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <CtaBanner />
+</BaseLayout>
+
+<style>
+  .post h2 {
+    font-size: var(--fs-lg);
+  }
+  .post time {
+    font-size: var(--fs-xs);
+    color: var(--text-3);
+    font-weight: 600;
+  }
+  .post__img {
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+  }
+</style>

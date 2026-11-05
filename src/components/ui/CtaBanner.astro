@@ -1,0 +1,78 @@
+---
+import Icon from '@/components/ui/Icon.astro';
+import { SITE, telHref } from '@/config/site';
+
+interface Props {
+  title?: string;
+  text?: string;
+}
+
+const {
+  title = 'Machine down? We can help.',
+  text = `Fast response across ${SITE.serviceArea}. Most faults fixed on the first visit.`,
+} = Astro.props;
+---
+
+<section class="cta" aria-labelledby="cta-title">
+  <div class="container">
+    <div class="cta__panel">
+      <div class="cta__icon" aria-hidden="true"><Icon name="bolt" size={28} /></div>
+      <div class="cta__copy">
+        <h2 id="cta-title">{title}</h2>
+        <p>{text}</p>
+      </div>
+      <div class="cta__actions">
+        <a href={telHref} class="btn btn--primary btn--lg"><Icon name="phone" size={20} /> {SITE.phone.display}</a>
+        <a href="/booking" class="btn btn--ghost btn--lg">Book online</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cta {
+    padding-block: var(--section-y);
+  }
+  .cta__panel {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    gap: 1.5rem;
+    align-items: center;
+    padding: clamp(1.75rem, 1rem + 3vw, 3rem);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--accent-line);
+    background:
+      radial-gradient(40rem 20rem at 0% 0%, rgb(34 184 240 / 0.22), transparent 60%),
+      linear-gradient(135deg, #0c1a33, #0a1222);
+  }
+  @media (min-width: 900px) {
+    .cta__panel {
+      grid-template-columns: auto 1fr auto;
+    }
+  }
+  .cta__icon {
+    display: grid;
+    place-items: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 14px;
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+  .cta__copy {
+    display: grid;
+    gap: 0.4rem;
+  }
+  h2 {
+    font-size: var(--fs-2xl);
+  }
+  p {
+    color: var(--text-2);
+  }
+  .cta__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+</style>

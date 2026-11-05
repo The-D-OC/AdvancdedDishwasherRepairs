@@ -1,0 +1,138 @@
+---
+import ContactAside from '@/components/ui/ContactAside.astro';
+import CtaBanner from '@/components/ui/CtaBanner.astro';
+import Icon from '@/components/ui/Icon.astro';
+import PageHero from '@/components/ui/PageHero.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getFaultCodes } from '@/lib/content';
+import { truncate } from '@/lib/format';
+import { formatBytes, getManualBySlug } from '@/lib/manuals';
+import { publicClient } from '@/lib/supabase';
+
+// Rendered on each request so edits in /admin appear immediately.
+export const prerender = false;
+
+const m = await getManualBySlug(publicClient(), Astro.params['manual'] ?? '');
+if (!m) {
+  return new Response(null, { status: 404 });
+}
+Astro.response.headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+const codes = (await getFaultCodes()).filter(
+  (f) => f.brand.toLowerCase() === m.brand.toLowerCase() && (!m.model || f.model.toLowerCase() === m.model.toLowerCase()),
+);
+
+const path = `/manuals/${m.slug}`;
+const description =
+  m.seoDescription ??
+  truncate(
+    `${m.description} ${m.pdfUrl ? 'Download the PDF' : 'Request a copy'} or get expert ${m.brand} repair help from Advanced Dishwasher Repairs.`.trim(),
+    158,
+  );
+const crumbs = [
+  { label: 'Manuals', href: '/manuals' },
+  { label: m.title, href: path },
+];
+---
+
+<BaseLayout
+  title={m.seoTitle ?? m.title}
+  description={description}
+  breadcrumbs={crumbs}
+  jsonLd={[
+    {
+      '@context': 'https://schema.org',
+      '@type': 'DigitalDocument',
+      name: m.title,
+      description: m.description,
+      about: { '@type': 'Product', name: `${m.brand} ${m.model}`, brand: { '@type': 'Brand', name: m.brand } },
+      url: new URL(`/manuals/${m.slug}`, Astro.site).toString(),
+      dateModified: m.updatedAt,
+      ...(m.pdfUrl ? { contentUrl: m.pdfUrl, encodingFormat: 'application/pdf' } : {}),
+    },
+  ]}
+>
+  <PageHero eyebrow={[m.brand, m.productType].filter(Boolean).join(' · ')} title={m.title} lead={m.description} breadcrumbs={crumbs} />
+
+  <section class="section">
+    <div class="container with-aside">
+      <div class="stack">
+        <div class="card doc">
+          <span class="icon-tile"><Icon name="file" size={26} /></span>
+          <dl>
+            <div><dt>Brand</dt><dd>{m.brand}</dd></div>
+            {m.model && <div><dt>Model</dt><dd>{m.model}</dd></div>}
+            {m.productType && <div><dt>Type</dt><dd>{m.productType}</dd></div>}
+          </dl>
+          {
+            m.pdfUrl ? (
+              <a href={m.pdfUrl} class="btn btn--primary btn--lg" target="_blank" rel="noopener" type="application/pdf">
+                <Icon name="download" size={20} /> Download PDF{m.pdfSize ? ` (${formatBytes(m.pdfSize)})` : ''}
+              </a>
+            ) : (
+              <a href="/contact" class="btn btn--secondary btn--lg">
+                <Icon name="mail" size={20} /> Request this manual
+              </a>
+            )
+          }
+        </div>
+
+        {
+          codes.length > 0 && (
+            <section aria-labelledby="codes-title">
+              <h2 id="codes-title" class="sub">
+                {m.brand} {m.model} fault codes
+              </h2>
+              <ul class="link-list">
+                {codes.map((f) => (
+                  <li>
+                    <a href={`/fault-codes/${f.slug}`}>
+                      <span class="code">{f.code}</span>
+                      <span>{f.title}</span>
+                      <Icon name="arrowRight" size={16} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        }
+      </div>
+      <ContactAside />
+    </div>
+  </section>
+
+  <CtaBanner />
+</BaseLayout>
+
+<style>
+  .stack {
+    display: grid;
+    gap: 2.25rem;
+  }
+  .sub {
+    font-size: var(--fs-xl);
+    margin-bottom: 1rem;
+  }
+  .doc {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .doc dl {
+    flex: 1 1 14rem;
+    display: grid;
+    gap: 0.3rem;
+  }
+  .doc dl div {
+    display: flex;
+    gap: 0.75rem;
+  }
+  .doc dt {
+    color: var(--text-3);
+    min-width: 4rem;
+  }
+  .doc dd {
+    font-weight: 600;
+  }
+</style>
